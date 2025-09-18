@@ -18,8 +18,8 @@
   "content_scripts": [
     {
       "matches": ["https://*.linkedin.com/*"],
-      "js": ["content/linkedin-automation.js"],
-      "css": ["content/styles.css"],
+      "js": ["content/linkedin-content.js"],
+      "type": "module",
       "run_at": "document_idle"
     }
   ],

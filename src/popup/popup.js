@@ -108,20 +108,18 @@ function updateStatusDisplay() {
 
 async function updateStatsDisplay() {
   try {
-    const analytics = await getAnalytics();
-    const today = new Date().toDateString();
+    const response = await chrome.runtime.sendMessage({ type: 'GET_ANALYTICS_SUMMARY' });
 
-    const sentToday = analytics.filter(
-      entry =>
-        new Date(entry.timestamp).toDateString() === today && entry.type === 'connection_sent'
-    ).length;
+    if (response.success && response.data) {
+      const analytics = response.data;
 
-    const accepted = analytics.filter(entry => entry.type === 'connection_accepted').length;
-
-    document.getElementById('sent-today').textContent = sentToday;
-    document.getElementById('accepted').textContent = accepted;
+      document.getElementById('sent-today').textContent = analytics.connectionsSent || 0;
+      document.getElementById('accepted').textContent = analytics.connectionsAccepted || 0;
+    }
   } catch (error) {
     console.error('Error updating stats:', error);
+    document.getElementById('sent-today').textContent = '0';
+    document.getElementById('accepted').textContent = '0';
   }
 }
 
