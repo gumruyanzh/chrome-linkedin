@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Bulk Connection Dashboard</title>
+  <link href="../styles/tailwind.css" rel="stylesheet">
+  <style>
+    .campaign-card {
+      transition: all 0.2s ease-in-out;
+    }
+    .campaign-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .progress-bar {
+      transition: width 0.3s ease-in-out;
+    }
+    .status-indicator {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center space-x-4">
+          <img src="../icons/icon-32.png" alt="LinkedIn Extension" class="w-8 h-8">
+          <div>
+            <h1 class="text-xl font-semibold text-gray-900">Bulk Connection Dashboard</h1>
+            <p class="text-sm text-gray-600">Manage large-scale LinkedIn connection campaigns</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <!-- Quick Stats -->
+          <div class="hidden md:flex items-center space-x-6 text-sm">
+            <div class="text-center">
+              <div class="font-semibold text-blue-600" id="total-sent">0</div>
+              <div class="text-gray-500">Sent Today</div>
+            </div>
+            <div class="text-center">
+              <div class="font-semibold text-green-600" id="total-accepted">0</div>
+              <div class="text-gray-500">Accepted</div>
+            </div>
+            <div class="text-center">
+              <div class="font-semibold text-orange-600" id="active-campaigns">0</div>
+              <div class="text-gray-500">Active</div>
+            </div>
+          </div>
+
+          <button id="create-campaign-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>New Campaign</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Filter and Search Controls -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+        <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <!-- Search -->
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" id="search-campaigns" placeholder="Search campaigns..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64">
+          </div>
+
+          <!-- Status Filter -->
+          <select id="status-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="completed">Completed</option>
+            <option value="scheduled">Scheduled</option>
+          </select>
+
+          <!-- Date Filter -->
+          <select id="date-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <!-- View Options -->
+          <div class="flex items-center space-x-2">
+            <button id="grid-view" class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+              </svg>
+            </button>
+            <button id="list-view" class="p-2 text-gray-400 hover:text-gray-600 border border-gray-300 rounded-lg">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Bulk Actions -->
+          <div class="relative">
+            <button id="bulk-actions-btn" class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+              <span>Bulk Actions</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <div id="bulk-actions-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <div class="py-2">
+                <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" data-action="pause">Pause Selected</button>
+                <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" data-action="resume">Resume Selected</button>
+                <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" data-action="duplicate">Duplicate Selected</button>
+                <hr class="my-1">
+                <button class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" data-action="delete">Delete Selected</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaigns Grid/List -->
+    <div id="campaigns-container">
+      <!-- Loading State -->
+      <div id="loading-state" class="flex items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span class="ml-3 text-gray-600">Loading campaigns...</span>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="hidden text-center py-12">
+        <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No campaigns yet</h3>
+        <p class="text-gray-600 mb-6">Get started by creating your first bulk connection campaign</p>
+        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">Create Your First Campaign</button>
+      </div>
+
+      <!-- Campaigns Grid -->
+      <div id="campaigns-grid" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Campaign cards will be inserted here -->
+      </div>
+
+      <!-- Campaigns List -->
+      <div id="campaigns-list" class="hidden space-y-4">
+        <!-- Campaign list items will be inserted here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Create Campaign Modal -->
+  <div id="create-campaign-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-gray-900">Create New Campaign</h2>
+          <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="campaign-form" class="space-y-6">
+          <!-- Campaign Name -->
+          <div>
+            <label for="campaign-name" class="block text-sm font-medium text-gray-700 mb-2">Campaign Name</label>
+            <input type="text" id="campaign-name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Tech Professionals Q4 2024" required>
+          </div>
+
+          <!-- Search Criteria -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="keywords" class="block text-xs text-gray-600 mb-1">Keywords</label>
+                  <input type="text" id="keywords" name="keywords" class="w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="software engineer">
+                </div>
+                <div>
+                  <label for="location" class="block text-xs text-gray-600 mb-1">Location</label>
+                  <input type="text" id="location" name="location" class="w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="San Francisco">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="company" class="block text-xs text-gray-600 mb-1">Company</label>
+                  <input type="text" id="company" name="company" class="w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="Google, Microsoft">
+                </div>
+                <div>
+                  <label for="industry" class="block text-xs text-gray-600 mb-1">Industry</label>
+                  <select id="industry" name="industry" class="w-full px-3 py-2 border border-gray-300 rounded text-sm">
+                    <option value="">All Industries</option>
+                    <option value="technology">Technology</option>
+                    <option value="finance">Finance</option>
+                    <option value="healthcare">Healthcare</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="sales">Sales</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message Template -->
+          <div>
+            <label for="message-template" class="block text-sm font-medium text-gray-700 mb-2">Message Template</label>
+            <select id="message-template" name="messageTemplate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="">Select a template...</option>
+              <!-- Templates will be populated dynamically -->
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Choose a message template or create a custom one</p>
+          </div>
+
+          <!-- Campaign Settings -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-4">Campaign Settings</label>
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="daily-limit" class="block text-xs text-gray-600 mb-1">Daily Limit</label>
+                  <input type="number" id="daily-limit" name="dailyLimit" class="w-full px-3 py-2 border border-gray-300 rounded text-sm" value="20" min="1" max="50">
+                </div>
+                <div>
+                  <label for="delay-between" class="block text-xs text-gray-600 mb-1">Delay Between (seconds)</label>
+                  <input type="number" id="delay-between" name="delayBetween" class="w-full px-3 py-2 border border-gray-300 rounded text-sm" value="30" min="10" max="300">
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-4">
+                <label class="flex items-center">
+                  <input type="checkbox" id="working-hours" name="workingHours" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200">
+                  <span class="ml-2 text-sm text-gray-700">Only during working hours (9 AM - 5 PM)</span>
+                </label>
+              </div>
+
+              <div class="flex items-center space-x-4">
+                <label class="flex items-center">
+                  <input type="checkbox" id="weekend-mode" name="weekendMode" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200">
+                  <span class="ml-2 text-sm text-gray-700">Include weekends</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Schedule -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Schedule</label>
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center">
+                <input type="radio" id="start-now" name="schedule" value="now" class="text-blue-600 focus:ring-blue-500" checked>
+                <span class="ml-2 text-sm text-gray-700">Start now</span>
+              </label>
+              <label class="flex items-center">
+                <input type="radio" id="start-later" name="schedule" value="later" class="text-blue-600 focus:ring-blue-500">
+                <span class="ml-2 text-sm text-gray-700">Schedule for later</span>
+              </label>
+            </div>
+
+            <div id="schedule-datetime" class="hidden mt-3">
+              <input type="datetime-local" id="start-datetime" name="startDateTime" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <button type="button" id="cancel-campaign" class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create Campaign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign Details Modal -->
+  <div id="campaign-details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 id="campaign-details-title" class="text-xl font-semibold text-gray-900">Campaign Details</h2>
+          <button id="close-details-modal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div id="campaign-details-content">
+          <!-- Campaign details will be populated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="bulk-dashboard.js"></script>
+</body>
+</html>

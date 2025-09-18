@@ -3,9 +3,16 @@ document.addEventListener('DOMContentLoaded', initializePopup);
 
 let currentSettings = null;
 let isAutomationActive = false;
+let helpSystem = null;
 
 async function initializePopup() {
   try {
+    // Initialize help system
+    if (typeof HelpSystem !== 'undefined') {
+      helpSystem = new HelpSystem();
+      helpSystem.init();
+    }
+
     // Load current settings
     currentSettings = await getSettings();
 
@@ -28,6 +35,18 @@ function setupEventListeners() {
   document.getElementById('start-automation').addEventListener('click', toggleAutomation);
   document.getElementById('open-dashboard').addEventListener('click', openDashboard);
   document.getElementById('open-settings').addEventListener('click', openSettings);
+
+  // Help system event listeners
+  const helpButton = document.getElementById('help-button');
+  if (helpButton && helpSystem) {
+    helpButton.addEventListener('click', () => helpSystem.show());
+  }
+
+  // Quick help for new users
+  const quickHelpBtn = document.getElementById('quick-help');
+  if (quickHelpBtn && helpSystem) {
+    quickHelpBtn.addEventListener('click', () => helpSystem.show('getting-started'));
+  }
 }
 
 async function toggleAutomation() {

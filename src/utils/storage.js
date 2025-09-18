@@ -8,9 +8,21 @@ export const STORAGE_KEYS = {
   SETTINGS: 'settings',
   ANALYTICS: 'analytics',
   TEMPLATES: 'message_templates',
+  TEMPLATE_LIBRARY: 'template_library',
   SAVED_SEARCHES: 'saved_searches',
   CONNECTION_QUEUE: 'connection_queue',
-  USER_PROFILE: 'user_profile'
+  CONNECTION_DATABASE: 'connection_database',
+  USER_PROFILE: 'user_profile',
+  CAMPAIGNS: 'campaigns',
+  AB_TESTS: 'ab_tests',
+  AB_ASSIGNMENTS: 'ab_assignments',
+  REPORT_TEMPLATES: 'report_templates',
+  SCHEDULED_REPORTS: 'scheduled_reports',
+  REPORT_HISTORY: 'report_history',
+  REPORTS: 'reports',
+  CONVERSATIONS: 'conversations',
+  FOLLOWUP_SEQUENCES: 'followup_sequences',
+  RESPONSE_TEMPLATES: 'response_templates'
 };
 
 /**
