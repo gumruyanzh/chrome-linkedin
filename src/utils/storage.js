@@ -13,7 +13,16 @@ export const STORAGE_KEYS = {
   CONNECTION_QUEUE: 'connection_queue',
   CONNECTION_DATABASE: 'connection_database',
   USER_PROFILE: 'user_profile',
-  CAMPAIGNS: 'campaigns'
+  CAMPAIGNS: 'campaigns',
+  AB_TESTS: 'ab_tests',
+  AB_ASSIGNMENTS: 'ab_assignments',
+  REPORT_TEMPLATES: 'report_templates',
+  SCHEDULED_REPORTS: 'scheduled_reports',
+  REPORT_HISTORY: 'report_history',
+  REPORTS: 'reports',
+  CONVERSATIONS: 'conversations',
+  FOLLOWUP_SEQUENCES: 'followup_sequences',
+  RESPONSE_TEMPLATES: 'response_templates'
 };
 
 /**
