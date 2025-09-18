@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Connection Automation</title>
+  <link href="../styles/tailwind.css" rel="stylesheet">
+</head>
+<body class="w-96 h-96 bg-gray-50">
+  <div class="p-4">
+    <!-- Header -->
+    <div class="flex items-center space-x-3 mb-6">
+      <img src="../icons/icon-32.png" alt="LinkedIn Extension" class="w-8 h-8">
+      <h1 class="text-lg font-semibold text-gray-800">LinkedIn Automation</h1>
+    </div>
+
+    <!-- Status Section -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-gray-600">Status:</span>
+        <div id="status" class="flex items-center space-x-2">
+          <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+          <span class="text-sm font-medium">Inactive</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="space-y-3 mb-6">
+      <button id="start-automation" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+        Start Automation
+      </button>
+
+      <button id="open-dashboard" class="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
+        Open Dashboard
+      </button>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-600" id="sent-today">0</div>
+        <div class="text-xs text-gray-500">Sent Today</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600" id="accepted">0</div>
+        <div class="text-xs text-gray-500">Accepted</div>
+      </div>
+    </div>
+
+    <!-- Settings Link -->
+    <div class="border-t pt-4">
+      <button id="open-settings" class="text-sm text-blue-600 hover:text-blue-800">
+        Settings & Configuration
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
