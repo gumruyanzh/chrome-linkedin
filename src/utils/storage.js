@@ -8,9 +8,12 @@ export const STORAGE_KEYS = {
   SETTINGS: 'settings',
   ANALYTICS: 'analytics',
   TEMPLATES: 'message_templates',
+  TEMPLATE_LIBRARY: 'template_library',
   SAVED_SEARCHES: 'saved_searches',
   CONNECTION_QUEUE: 'connection_queue',
-  USER_PROFILE: 'user_profile'
+  CONNECTION_DATABASE: 'connection_database',
+  USER_PROFILE: 'user_profile',
+  CAMPAIGNS: 'campaigns'
 };
 
 /**
