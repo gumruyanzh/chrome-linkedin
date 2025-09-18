@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   TEMPLATE_LIBRARY: 'template_library',
   SAVED_SEARCHES: 'saved_searches',
   CONNECTION_QUEUE: 'connection_queue',
+  CONNECTION_DATABASE: 'connection_database',
   USER_PROFILE: 'user_profile',
   CAMPAIGNS: 'campaigns'
 };
