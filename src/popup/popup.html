@@ -9,9 +9,16 @@
 <body class="w-96 h-96 bg-gray-50">
   <div class="p-4">
     <!-- Header -->
-    <div class="flex items-center space-x-3 mb-6">
-      <img src="../icons/icon-32.png" alt="LinkedIn Extension" class="w-8 h-8">
-      <h1 class="text-lg font-semibold text-gray-800">LinkedIn Automation</h1>
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center space-x-3">
+        <img src="../icons/icon-32.png" alt="LinkedIn Extension" class="w-8 h-8">
+        <h1 class="text-lg font-semibold text-gray-800">LinkedIn Automation</h1>
+      </div>
+      <button id="help-button" class="text-gray-600 hover:text-blue-600 p-1 rounded" title="Help & Support">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
     </div>
 
     <!-- Status Section -->
@@ -48,14 +55,49 @@
       </div>
     </div>
 
-    <!-- Settings Link -->
-    <div class="border-t pt-4">
-      <button id="open-settings" class="text-sm text-blue-600 hover:text-blue-800">
-        Settings & Configuration
+    <!-- Quick Help & Settings -->
+    <div class="border-t pt-4 space-y-2">
+      <button id="quick-help" class="w-full text-sm text-blue-600 hover:text-blue-800 text-left">
+        📖 Getting Started Guide
       </button>
+      <button id="open-settings" class="w-full text-sm text-blue-600 hover:text-blue-800 text-left">
+        ⚙️ Settings & Configuration
+      </button>
+    </div>
+
+    <!-- New User Welcome -->
+    <div id="welcome-banner" class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm" style="display: none;">
+      <div class="flex items-start space-x-2">
+        <span class="text-lg">👋</span>
+        <div>
+          <div class="font-medium text-yellow-800">Welcome to LinkedIn Extension!</div>
+          <div class="text-yellow-700 mt-1">New here? Click "Getting Started Guide" for help.</div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <script src="../components/help-system.js"></script>
   <script type="module" src="popup.js"></script>
+  <script>
+    // Show welcome banner for new users
+    chrome.storage.local.get(['isFirstTime'], (result) => {
+      if (result.isFirstTime !== false) {
+        document.getElementById('welcome-banner').style.display = 'block';
+
+        // Hide banner when user clicks getting started
+        document.getElementById('quick-help').addEventListener('click', () => {
+          document.getElementById('welcome-banner').style.display = 'none';
+          chrome.storage.local.set({ isFirstTime: false });
+        });
+
+        // Auto-hide after 15 seconds
+        setTimeout(() => {
+          document.getElementById('welcome-banner').style.display = 'none';
+          chrome.storage.local.set({ isFirstTime: false });
+        }, 15000);
+      }
+    });
+  </script>
 </body>
 </html>
