@@ -335,15 +335,25 @@ export function waitForElement(selector, timeout = 5000) {
  */
 export function extractProfileFromSearchResult(element) {
   try {
-    // Updated selectors for current LinkedIn structure
+    // Updated selectors for current LinkedIn structure (2025)
     const nameSelectors = [
+      // Primary selectors for current LinkedIn structure
+      '.entity-result__title-text a span[aria-hidden="true"]',
+      '.entity-result__title-text .app-aware-link span[aria-hidden="true"]',
       '.entity-result__title-text a',
       '.app-aware-link .entity-result__title-text',
+
+      // Alternative selectors for different layouts
       '.search-result__info .actor-name a',
       '.artdeco-entity-lockup__title a',
       '.reusable-search__result-container .entity-result__title-text a',
       '[data-control-name="search_srp_result"] a[href*="/in/"]',
-      '.actor-name a' // fallback
+
+      // Broader fallback selectors
+      'a[href*="/in/"] span[aria-hidden="true"]',
+      '.actor-name a',
+      'a[data-control-name*="people"]',
+      '.search-results-container a[href*="/in/"]'
     ];
 
     const titleSelectors = [
@@ -362,13 +372,13 @@ export function extractProfileFromSearchResult(element) {
     ];
 
     const connectButtonSelectors = [
-      // Primary Connect button patterns
+      // Primary Connect button patterns for 2025 LinkedIn structure
       'button[aria-label*="Invite"][aria-label*="connect"]',
       'button[aria-label*="Connect"]',
       'button[data-control-name="connect"]',
       'button[data-control-name="invite"]',
 
-      // Updated selectors for current LinkedIn UI (2024)
+      // Updated selectors for current LinkedIn UI (2025)
       '.artdeco-button--secondary[aria-label*="connect"]',
       '.artdeco-button[aria-label*="Connect"]',
       'button[aria-label*="Invite"]',
@@ -378,14 +388,23 @@ export function extractProfileFromSearchResult(element) {
       '.entity-result__actions button[aria-label*="Connect"]',
       '.entity-result__actions button[aria-label*="Invite"]',
 
+      // Additional patterns for 2025 structure
+      '.entity-result__item-actions button',
+      '.search-result__actions-container button',
+      '.entity-result button[data-control-name*="connect"]',
+
       // Fallback patterns - any button in the actions area
       '.search-result__actions button',
       '.entity-result__actions button',
 
-      // Even broader fallbacks
-      'button[aria-label*="connect" i]', // case insensitive
+      // Even broader fallbacks with case insensitivity
+      'button[aria-label*="connect" i]',
       'button[aria-label*="Connect" i]',
-      'button[aria-label*="invite" i]'
+      'button[aria-label*="invite" i]',
+
+      // Text-based fallbacks
+      'button:contains("Connect")',
+      'button:contains("Invite")'
     ];
 
     const nameElement = findFirstElement(element, nameSelectors);
@@ -394,7 +413,14 @@ export function extractProfileFromSearchResult(element) {
     const connectButton = findFirstElement(element, connectButtonSelectors);
 
     if (!nameElement) {
-      console.log('No name element found in search result:', element);
+      console.log('No name element found in search result. Debugging info:');
+      console.log('- Element HTML snippet:', element.outerHTML.substring(0, 200) + '...');
+      console.log('- Element classes:', element.className);
+      console.log('- All links in element:', Array.from(element.querySelectorAll('a')).map(a => ({
+        href: a.href,
+        text: a.textContent?.trim(),
+        className: a.className
+      })));
       return null;
     }
 

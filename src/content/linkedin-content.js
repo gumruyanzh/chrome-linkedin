@@ -110,6 +110,15 @@ async function startAutomation() {
   }
 
   console.log('Starting LinkedIn automation...');
+
+  // Validate page before starting automation
+  const validationResult = await validatePageForAutomation();
+  if (!validationResult.valid) {
+    console.log('Page validation failed:', validationResult.errors);
+    showNotification(`Cannot start automation: ${validationResult.errors.join(', ')}`, 'error');
+    return;
+  }
+
   isAutomationActive = true;
 
   await trackEvent(ANALYTICS_EVENTS.AUTOMATION_STARTED, {
@@ -119,6 +128,44 @@ async function startAutomation() {
 
   // Start automation loop
   automationLoop();
+}
+
+async function validatePageForAutomation() {
+  const errors = [];
+
+  try {
+    // Check if we're on a valid LinkedIn search page
+    if (!window.location.href.includes('/search/people/') && !window.location.href.includes('/search/results/people/')) {
+      errors.push('Not on a LinkedIn people search page');
+    }
+
+    // Try to find search results
+    const searchResults = await processSearchResults();
+    if (searchResults.length === 0) {
+      console.log('No search results found during validation - checking if page is still loading...');
+
+      // Wait a bit for page to load and try again
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const retryResults = await processSearchResults();
+
+      if (retryResults.length === 0) {
+        errors.push('No search results found on page');
+      } else {
+        console.log(`Found ${retryResults.length} search results after retry`);
+      }
+    } else {
+      console.log(`Validation found ${searchResults.length} search results`);
+    }
+
+  } catch (error) {
+    console.error('Error during page validation:', error);
+    errors.push('Page validation failed');
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors: errors
+  };
 }
 
 function stopAutomation() {
@@ -187,12 +234,22 @@ async function processSearchPage() {
     const profiles = await processSearchResults();
     console.log(`Found ${profiles.length} connectable profiles`);
 
-    // If no connectable profiles found, stop automation to prevent infinite loop
+    // If no connectable profiles found, try to continue to next page instead of stopping
     if (profiles.length === 0) {
-      console.log('No connectable profiles found on this page, stopping automation');
-      stopAutomation();
-      showNotification('No connectable profiles found - automation stopped', 'info');
-      return false; // Indicate no processing was done
+      console.log('No connectable profiles found on this page, attempting to navigate to next page');
+
+      // Try to navigate to next page before stopping automation
+      const navigated = await navigateToNextPage();
+      if (navigated) {
+        console.log('Navigated to next page, continuing automation');
+        showNotification('No connectable profiles on this page - moving to next page', 'info');
+        return true; // Continue automation on next page
+      } else {
+        console.log('No more pages available, stopping automation');
+        stopAutomation();
+        showNotification('No connectable profiles found and no more pages - automation stopped', 'info');
+        return false; // Indicate no processing was done
+      }
     }
 
     let connectionsAttempted = 0;
