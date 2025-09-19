@@ -85,10 +85,25 @@ export const createChromeExtensionMock = () => {
   const storageMock = new ChromeStorageMock();
   const tabsMock = new ChromeTabsMock();
 
+  // Create Jest mock functions for storage methods
+  const mockStorageLocal = {
+    get: jest.fn().mockImplementation(storageMock.get.bind(storageMock)),
+    set: jest.fn().mockImplementation(storageMock.set.bind(storageMock)),
+    remove: jest.fn().mockImplementation(storageMock.remove.bind(storageMock)),
+    clear: jest.fn().mockImplementation(storageMock.clear.bind(storageMock))
+  };
+
+  const mockStorageSync = {
+    get: jest.fn().mockImplementation(storageMock.get.bind(storageMock)),
+    set: jest.fn().mockImplementation(storageMock.set.bind(storageMock)),
+    remove: jest.fn().mockImplementation(storageMock.remove.bind(storageMock)),
+    clear: jest.fn().mockImplementation(storageMock.clear.bind(storageMock))
+  };
+
   return {
     storage: {
-      local: storageMock,
-      sync: storageMock
+      local: mockStorageLocal,
+      sync: mockStorageSync
     },
     tabs: tabsMock,
     scripting: {
