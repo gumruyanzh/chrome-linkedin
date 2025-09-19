@@ -48,6 +48,7 @@ export default defineConfig({
               // Update paths to match build output
               manifest.background.service_worker = 'background.js';
               manifest.content_scripts[0].js = ['content.js'];
+              manifest.content_scripts[0].css = ['content/styles.css', 'assets/vintage-typography.css'];
               // Remove module type to ensure content script runs as traditional script
               if (manifest.content_scripts[0].type) {
                 delete manifest.content_scripts[0].type;

@@ -26,11 +26,14 @@ function handleMessage(message, sender, sendResponse) {
   switch (message.type) {
     case 'START_AUTOMATION':
       startAutomation();
-      sendResponse({ success: true });
+      sendResponse({ success: true, isActive: true });
       break;
     case 'STOP_AUTOMATION':
       stopAutomation();
-      sendResponse({ success: true });
+      sendResponse({ success: true, isActive: false });
+      break;
+    case 'GET_AUTOMATION_STATE':
+      sendResponse({ success: true, isActive: automationState.isActive });
       break;
     case 'GET_PAGE_INFO':
       const pageInfo = getLinkedInPageInfo();

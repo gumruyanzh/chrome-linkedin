@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Xavier Framework CLI for Claude Code"""
+
+import sys
+import json
+from pathlib import Path
+
+# Add Xavier to path
+sys.path.insert(0, str(Path(__file__).parent / ".xavier"))
+
+from src.commands.xavier_commands import XavierCommands
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: xavier <command> [args]")
+        print("Run 'xavier help' for available commands")
+        sys.exit(1)
+
+    command = sys.argv[1]
+    args = {}
+
+    if len(sys.argv) > 2:
+        # Parse JSON arguments if provided
+        try:
+            args = json.loads(sys.argv[2])
+        except:
+            args = {"input": " ".join(sys.argv[2:])}
+
+    # Initialize Xavier commands
+    xavier = XavierCommands()
+
+    # Map command shortcuts
+    command_map = {
+        "help": "/xavier-help",
+        "story": "/create-story",
+        "task": "/create-task",
+        "bug": "/create-bug",
+        "sprint": "/create-sprint",
+        "start": "/start-sprint",
+        "backlog": "/show-backlog"
+    }
+
+    # Get full command
+    full_command = command_map.get(command, f"/{command}")
+
+    # Execute command
+    result = xavier.execute(full_command, args)
+
+    # Print result
+    print(json.dumps(result, indent=2))

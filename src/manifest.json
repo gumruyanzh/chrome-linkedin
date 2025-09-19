@@ -19,6 +19,7 @@
     {
       "matches": ["https://*.linkedin.com/*"],
       "js": ["content/linkedin-content.js"],
+      "css": ["content/styles.css", "assets/vintage-typography.css"],
       "type": "module",
       "run_at": "document_idle"
     }
@@ -46,6 +47,8 @@
         "content/*",
         "components/*",
         "styles/*",
+        "assets/*",
+        "*.css",
         "*.js",
         "analytics-*.js",
         "storage-*.js"
