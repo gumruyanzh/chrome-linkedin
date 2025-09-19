@@ -9,7 +9,28 @@ import { trackEvent, ANALYTICS_EVENTS } from './analytics.js';
  */
 export async function processSearchResults() {
   try {
-    const searchResults = document.querySelectorAll('[data-control-name="search_srp_result"]');
+    // Updated search result selectors for current LinkedIn structure
+    const searchResultSelectors = [
+      '[data-control-name="search_srp_result"]',
+      '.reusable-search__result-container',
+      '.search-result__wrapper',
+      '.entity-result',
+      '.search-results-container li',
+      '[data-view-name="search-entity-result"]',
+      '.artdeco-entity-lockup'
+    ];
+
+    let searchResults = [];
+
+    // Try each selector until we find search results
+    for (const selector of searchResultSelectors) {
+      searchResults = document.querySelectorAll(selector);
+      if (searchResults.length > 0) {
+        console.log(`Found ${searchResults.length} search results using selector: ${selector}`);
+        break;
+      }
+    }
+
     const profiles = [];
 
     for (const resultElement of searchResults) {
@@ -56,11 +77,26 @@ export function extractSearchCriteria() {
  */
 export async function navigateToNextPage() {
   try {
-    const nextButton = document.querySelector('[aria-label="Next"]');
-    if (nextButton && !nextButton.disabled) {
-      nextButton.click();
-      return true;
+    // Updated pagination selectors for current LinkedIn structure
+    const nextButtonSelectors = [
+      '[aria-label="Next"]',
+      '.artdeco-pagination__button--next',
+      '.search-results__pagination-next-btn',
+      'button[aria-label*="next"]',
+      '.pagination-controls .next',
+      'button[data-test-pagination-page-btn]:last-child'
+    ];
+
+    for (const selector of nextButtonSelectors) {
+      const nextButton = document.querySelector(selector);
+      if (nextButton && !nextButton.disabled && !nextButton.classList.contains('disabled')) {
+        console.log(`Navigating to next page using selector: ${selector}`);
+        nextButton.click();
+        return true;
+      }
     }
+
+    console.log('No active next button found');
     return false;
   } catch (error) {
     console.error('Error navigating to next page:', error);

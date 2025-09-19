@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Extension Icons</title>
+</head>
+<body>
+    <h1>Creating Extension Icons...</h1>
+    <canvas id="canvas" style="border: 1px solid #ccc;"></canvas>
+
+    <script>
+        function createIcon(size) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = size;
+            canvas.height = size;
+
+            // Vintage background
+            ctx.fillStyle = '#F4F1DE';
+            ctx.fillRect(0, 0, size, size);
+
+            // Border
+            ctx.strokeStyle = '#3D405B';
+            ctx.lineWidth = Math.max(1, size / 32);
+            ctx.strokeRect(ctx.lineWidth/2, ctx.lineWidth/2, size - ctx.lineWidth, size - ctx.lineWidth);
+
+            // LinkedIn "in" style logo
+            const fontSize = size * 0.4;
+            ctx.fillStyle = '#2F2F2F';
+            ctx.font = `bold ${fontSize}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('LC', size/2, size/2);
+
+            // Convert to blob and download
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // Create all required icon sizes
+        setTimeout(() => createIcon(16), 100);
+        setTimeout(() => createIcon(32), 200);
+        setTimeout(() => createIcon(48), 300);
+        setTimeout(() => createIcon(128), 400);
+    </script>
+</body>
+</html>

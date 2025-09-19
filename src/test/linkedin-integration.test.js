@@ -83,50 +83,35 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should detect profile page correctly', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       const pageType = detectLinkedInPageType();
       expect(pageType).toBe('profile');
     });
 
     test('should detect network page correctly', () => {
-      mockPage = new LinkedInPageMock(
-        'network',
-        'https://www.linkedin.com/mynetwork/'
-      );
+      mockPage = new LinkedInPageMock('network', 'https://www.linkedin.com/mynetwork/');
 
       const pageType = detectLinkedInPageType();
       expect(pageType).toBe('network');
     });
 
     test('should detect messaging page correctly', () => {
-      mockPage = new LinkedInPageMock(
-        'messaging',
-        'https://www.linkedin.com/messaging/'
-      );
+      mockPage = new LinkedInPageMock('messaging', 'https://www.linkedin.com/messaging/');
 
       const pageType = detectLinkedInPageType();
       expect(pageType).toBe('messaging');
     });
 
     test('should detect feed page correctly', () => {
-      mockPage = new LinkedInPageMock(
-        'feed',
-        'https://www.linkedin.com/feed/'
-      );
+      mockPage = new LinkedInPageMock('feed', 'https://www.linkedin.com/feed/');
 
       const pageType = detectLinkedInPageType();
       expect(pageType).toBe('feed');
     });
 
     test('should return unknown for unrecognized LinkedIn pages', () => {
-      mockPage = new LinkedInPageMock(
-        'unknown',
-        'https://www.linkedin.com/some/unknown/page'
-      );
+      mockPage = new LinkedInPageMock('unknown', 'https://www.linkedin.com/some/unknown/page');
 
       const pageType = detectLinkedInPageType();
       expect(pageType).toBe('unknown');
@@ -142,10 +127,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
       expect(detectLinkedInPageType()).toBe('people-search');
 
       // Test with hash fragments
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/#section'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/#section');
 
       expect(detectLinkedInPageType()).toBe('profile');
     });
@@ -153,28 +135,19 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
 
   describe('LinkedIn Page Validation', () => {
     test('should correctly identify LinkedIn pages', () => {
-      mockPage = new LinkedInPageMock(
-        'feed',
-        'https://www.linkedin.com/feed/'
-      );
+      mockPage = new LinkedInPageMock('feed', 'https://www.linkedin.com/feed/');
 
       expect(isLinkedInPage()).toBe(true);
     });
 
     test('should correctly identify non-LinkedIn pages', () => {
-      mockPage = new LinkedInPageMock(
-        'external',
-        'https://www.google.com'
-      );
+      mockPage = new LinkedInPageMock('external', 'https://www.google.com');
 
       expect(isLinkedInPage()).toBe(false);
     });
 
     test('should handle LinkedIn subdomains', () => {
-      mockPage = new LinkedInPageMock(
-        'feed',
-        'https://mobile.linkedin.com/feed/'
-      );
+      mockPage = new LinkedInPageMock('feed', 'https://mobile.linkedin.com/feed/');
 
       expect(isLinkedInPage()).toBe(true);
     });
@@ -182,10 +155,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
 
   describe('DOM Element Identification and Parsing', () => {
     test('should identify connection buttons on profile pages', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Mock connect button elements
       const connectButton = createLinkedInElement('button', {
@@ -201,10 +171,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should identify message buttons on profile pages', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       const messageButton = createLinkedInElement('button', {
         attributes: { 'aria-label': 'Message John Doe' },
@@ -220,10 +187,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should parse profile information from profile pages', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Mock profile elements
       const nameElement = createLinkedInElement('h1', { text: 'John Doe' });
@@ -272,9 +236,15 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
         const locationElement = createLinkedInElement('div', { text: result.location });
 
         resultElement.querySelector = jest.fn(selector => {
-          if (selector.includes('title-text')) return nameElement;
-          if (selector.includes('primary-subtitle')) return titleElement;
-          if (selector.includes('secondary-subtitle')) return locationElement;
+          if (selector.includes('title-text')) {
+            return nameElement;
+          }
+          if (selector.includes('primary-subtitle')) {
+            return titleElement;
+          }
+          if (selector.includes('secondary-subtitle')) {
+            return locationElement;
+          }
           return null;
         });
 
@@ -297,10 +267,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
 
   describe('Layout Changes and Error Handling', () => {
     test('should handle missing elements gracefully', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Don't add any elements to simulate missing elements
       const profileInfo = getProfilePageInfo();
@@ -310,10 +277,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should handle DOM query errors gracefully', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Mock querySelector to throw an error
       global.document.querySelector = jest.fn(() => {
@@ -326,10 +290,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should handle changed LinkedIn selectors', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Test fallback selectors
       const nameElement = createLinkedInElement('h1', { text: 'John Doe' });
@@ -363,10 +324,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
 
   describe('LinkedIn Element Validation', () => {
     test('should validate connection button states', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Test different button states
       const connectButton = createLinkedInElement('button', {
@@ -402,10 +360,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should identify premium vs non-premium profiles', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Test premium indicator
       const premiumBadge = createLinkedInElement('span', {
@@ -421,10 +376,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
 
   describe('Activity Tracking and User Interaction', () => {
     test('should setup activity tracking event listeners', () => {
-      mockPage = new LinkedInPageMock(
-        'feed',
-        'https://www.linkedin.com/feed/'
-      );
+      mockPage = new LinkedInPageMock('feed', 'https://www.linkedin.com/feed/');
 
       initActivityTracking();
 
@@ -441,10 +393,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should track user activity correctly', () => {
-      mockPage = new LinkedInPageMock(
-        'feed',
-        'https://www.linkedin.com/feed/'
-      );
+      mockPage = new LinkedInPageMock('feed', 'https://www.linkedin.com/feed/');
 
       // Mock Date.now
       const mockNow = jest.spyOn(Date, 'now').mockReturnValue(12345);
@@ -485,10 +434,7 @@ describe('LinkedIn Integration Tests - Task 2.1', () => {
     });
 
     test('should handle memory cleanup properly', () => {
-      mockPage = new LinkedInPageMock(
-        'profile',
-        'https://www.linkedin.com/in/johndoe/'
-      );
+      mockPage = new LinkedInPageMock('profile', 'https://www.linkedin.com/in/johndoe/');
 
       // Test that functions don't create memory leaks
       for (let i = 0; i < 100; i++) {

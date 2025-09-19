@@ -24,7 +24,8 @@ const DEFAULT_TEMPLATES = [
     id: 'professional-introduction',
     name: 'Professional Introduction',
     category: 'general',
-    message: 'Hi {{firstName}}, I came across your profile and was impressed by your work at {{company}}. I would love to connect and share insights about {{title}}.',
+    message:
+      'Hi {{firstName}}, I came across your profile and was impressed by your work at {{company}}. I would love to connect and share insights about {{title}}.',
     variables: ['firstName', 'company', 'title'],
     isDefault: true,
     createdAt: Date.now(),
@@ -34,7 +35,8 @@ const DEFAULT_TEMPLATES = [
     id: 'mutual-connection',
     name: 'Mutual Connection',
     category: 'networking',
-    message: 'Hi {{firstName}}, I noticed we have {{mutualConnections}} mutual connections. I would love to expand my network and connect with you.',
+    message:
+      'Hi {{firstName}}, I noticed we have {{mutualConnections}} mutual connections. I would love to expand my network and connect with you.',
     variables: ['firstName', 'mutualConnections'],
     isDefault: true,
     createdAt: Date.now(),
@@ -44,7 +46,8 @@ const DEFAULT_TEMPLATES = [
     id: 'industry-interest',
     name: 'Industry Interest',
     category: 'professional',
-    message: 'Hello {{firstName}}, I am interested in connecting with professionals in {{title}} field. Your experience at {{company}} looks fascinating!',
+    message:
+      'Hello {{firstName}}, I am interested in connecting with professionals in {{title}} field. Your experience at {{company}} looks fascinating!',
     variables: ['firstName', 'title', 'company'],
     isDefault: true,
     createdAt: Date.now(),
@@ -54,7 +57,8 @@ const DEFAULT_TEMPLATES = [
     id: 'location-based',
     name: 'Location Based',
     category: 'general',
-    message: 'Hi {{firstName}}, I see we are both based in {{location}}. Would love to connect with local professionals like yourself.',
+    message:
+      'Hi {{firstName}}, I see we are both based in {{location}}. Would love to connect with local professionals like yourself.',
     variables: ['firstName', 'location'],
     isDefault: true,
     createdAt: Date.now(),
@@ -64,7 +68,8 @@ const DEFAULT_TEMPLATES = [
     id: 'brief-introduction',
     name: 'Brief Introduction',
     category: 'simple',
-    message: 'Hi {{firstName}}, I would like to connect with you to expand my professional network. Thank you!',
+    message:
+      'Hi {{firstName}}, I would like to connect with you to expand my professional network. Thank you!',
     variables: ['firstName'],
     isDefault: true,
     createdAt: Date.now(),
@@ -143,7 +148,9 @@ export async function updateMessageTemplate(templateId, updates) {
     const updatedTemplate = {
       ...templates[templateIndex],
       ...updates,
-      variables: updates.message ? extractVariables(updates.message) : templates[templateIndex].variables,
+      variables: updates.message
+        ? extractVariables(updates.message)
+        : templates[templateIndex].variables,
       updatedAt: Date.now()
     };
 
@@ -272,10 +279,11 @@ export async function searchMessageTemplates(query) {
     const templates = await getMessageTemplates();
     const lowerQuery = query.toLowerCase();
 
-    return templates.filter(template =>
-      template.name.toLowerCase().includes(lowerQuery) ||
-      template.message.toLowerCase().includes(lowerQuery) ||
-      template.category.toLowerCase().includes(lowerQuery)
+    return templates.filter(
+      template =>
+        template.name.toLowerCase().includes(lowerQuery) ||
+        template.message.toLowerCase().includes(lowerQuery) ||
+        template.category.toLowerCase().includes(lowerQuery)
     );
   } catch (error) {
     console.error('Error searching message templates:', error);
@@ -298,8 +306,10 @@ export async function getTemplateUsageStats() {
       totalUsage: templates.reduce((sum, t) => sum + (t.usageCount || 0), 0),
       mostUsed: templates.sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))[0],
       categories: [...new Set(templates.map(t => t.category))],
-      averageUsage: templates.length > 0 ?
-        templates.reduce((sum, t) => sum + (t.usageCount || 0), 0) / templates.length : 0
+      averageUsage:
+        templates.length > 0
+          ? templates.reduce((sum, t) => sum + (t.usageCount || 0), 0) / templates.length
+          : 0
     };
 
     return stats;
@@ -338,7 +348,9 @@ export function validateMessageTemplate(template) {
 
   // Variable validation
   const variables = extractVariables(template.message);
-  const unsupportedVars = variables.filter(v => !Object.keys(TEMPLATE_VARIABLES).includes(v.toUpperCase()));
+  const unsupportedVars = variables.filter(
+    v => !Object.keys(TEMPLATE_VARIABLES).includes(v.toUpperCase())
+  );
 
   if (unsupportedVars.length > 0) {
     warnings.push(`Unsupported variables: ${unsupportedVars.join(', ')}`);
@@ -387,7 +399,9 @@ function extractVariables(message) {
  * @returns {string} First name
  */
 function extractFirstName(fullName) {
-  if (!fullName) return '';
+  if (!fullName) {
+    return '';
+  }
   return fullName.split(' ')[0];
 }
 
@@ -397,15 +411,12 @@ function extractFirstName(fullName) {
  * @returns {string} Company name or default
  */
 function extractCompany(title) {
-  if (!title) return '';
+  if (!title) {
+    return '';
+  }
 
   // Common patterns: "Title at Company", "Title | Company", "Title - Company"
-  const patterns = [
-    / at (.+)$/i,
-    / \| (.+)$/i,
-    / - (.+)$/i,
-    / @ (.+)$/i
-  ];
+  const patterns = [/ at (.+)$/i, / \| (.+)$/i, / - (.+)$/i, / @ (.+)$/i];
 
   for (const pattern of patterns) {
     const match = title.match(pattern);

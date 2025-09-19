@@ -18,9 +18,9 @@ export const AB_TEST_STATUS = {
  * Statistical significance levels
  */
 export const SIGNIFICANCE_LEVELS = {
-  LOW: 0.80,      // 80%
-  MEDIUM: 0.90,   // 90%
-  HIGH: 0.95,     // 95%
+  LOW: 0.8, // 80%
+  MEDIUM: 0.9, // 90%
+  HIGH: 0.95, // 95%
   VERY_HIGH: 0.99 // 99%
 };
 
@@ -97,7 +97,6 @@ export class ABTestingFramework {
       });
 
       return test;
-
     } catch (error) {
       // Re-throw validation errors directly for tests
       if (error.message.includes('variants') || error.message.includes('Test must have')) {
@@ -133,7 +132,7 @@ export class ABTestingFramework {
 
       // Set completion date if duration is specified
       if (test.duration) {
-        test.scheduledEndAt = test.startedAt + (test.duration * 24 * 60 * 60 * 1000);
+        test.scheduledEndAt = test.startedAt + test.duration * 24 * 60 * 60 * 1000;
       }
 
       await this.saveTest(test);
@@ -146,7 +145,6 @@ export class ABTestingFramework {
       });
 
       return test;
-
     } catch (error) {
       // Re-throw validation errors directly for tests
       if (error.message.includes('not found') || error.message.includes('status')) {
@@ -214,7 +212,6 @@ export class ABTestingFramework {
       });
 
       return assignment;
-
     } catch (error) {
       console.error('Error assigning user to variant:', error);
       return null;
@@ -299,7 +296,6 @@ export class ABTestingFramework {
       await this.checkAutoStop(test);
 
       return true;
-
     } catch (error) {
       console.error('Error recording conversion:', error);
       return false;
@@ -314,7 +310,9 @@ export class ABTestingFramework {
   async calculateStatisticalSignificance(test) {
     try {
       if (test.variants.length !== 2) {
-        throw new Error('Statistical significance calculation currently supports only 2-variant tests');
+        throw new Error(
+          'Statistical significance calculation currently supports only 2-variant tests'
+        );
       }
 
       const [variantA, variantB] = test.variants;
@@ -343,7 +341,7 @@ export class ABTestingFramework {
       const pPooled = (statsA.conversions + statsB.conversions) / (nA + nB);
 
       // Standard error
-      const se = Math.sqrt(pPooled * (1 - pPooled) * (1/nA + 1/nB));
+      const se = Math.sqrt(pPooled * (1 - pPooled) * (1 / nA + 1 / nB));
 
       // Z-score
       const zScore = (pA - pB) / se;
@@ -352,7 +350,7 @@ export class ABTestingFramework {
       const pValue = 2 * (1 - this.normalCDF(Math.abs(zScore)));
 
       // Confidence interval
-      const seCI = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
+      const seCI = Math.sqrt((pA * (1 - pA)) / nA + (pB * (1 - pB)) / nB);
       const zCritical = this.getZCritical(test.significanceLevel);
       const diff = pA - pB;
       const margin = zCritical * seCI;
@@ -363,7 +361,7 @@ export class ABTestingFramework {
         level: test.significanceLevel
       };
 
-      const statisticallySignificant = pValue < (1 - test.significanceLevel);
+      const statisticallySignificant = pValue < 1 - test.significanceLevel;
 
       // Calculate effect size with variant B as the treatment vs variant A as control
       const effectSize = pB - pA; // Variant B - Variant A (control)
@@ -387,7 +385,6 @@ export class ABTestingFramework {
       test.statistics.statisticallySignificant = statisticallySignificant;
 
       return result;
-
     } catch (error) {
       console.error('Error calculating statistical significance:', error);
       return {
@@ -452,7 +449,6 @@ export class ABTestingFramework {
       });
 
       return test;
-
     } catch (error) {
       console.error('Error stopping A/B test:', error);
       throw new Error(`Failed to stop A/B test: ${error.message}`);
@@ -468,9 +464,10 @@ export class ABTestingFramework {
   async getActiveTestForUser(userId, context = {}) {
     try {
       // Find active tests that match the context
-      const activeTests = Array.from(this.tests.values()).filter(test =>
-        test.status === AB_TEST_STATUS.ACTIVE &&
-        this.matchesTargetAudience(context, test.targetAudience)
+      const activeTests = Array.from(this.tests.values()).filter(
+        test =>
+          test.status === AB_TEST_STATUS.ACTIVE &&
+          this.matchesTargetAudience(context, test.targetAudience)
       );
 
       // Return the first matching test assignment
@@ -498,7 +495,6 @@ export class ABTestingFramework {
       }
 
       return null;
-
     } catch (error) {
       console.error('Error getting active test for user:', error);
       return null;
@@ -517,18 +513,19 @@ export class ABTestingFramework {
         throw new Error('Test not found');
       }
 
-      const statisticalAnalysis = test.status === AB_TEST_STATUS.COMPLETED ?
-        test.results.statisticalAnalysis :
-        await this.calculateStatisticalSignificance(test);
+      const statisticalAnalysis =
+        test.status === AB_TEST_STATUS.COMPLETED
+          ? test.results.statisticalAnalysis
+          : await this.calculateStatisticalSignificance(test);
 
       return {
         test,
         statistics: test.statistics,
         statisticalAnalysis,
         isComplete: test.status === AB_TEST_STATUS.COMPLETED,
-        recommendations: test.results?.recommendations || this.generateRecommendations(test, statisticalAnalysis)
+        recommendations:
+          test.results?.recommendations || this.generateRecommendations(test, statisticalAnalysis)
       };
-
     } catch (error) {
       console.error('Error getting test results:', error);
       throw new Error(`Failed to get test results: ${error.message}`);
@@ -613,7 +610,7 @@ export class ABTestingFramework {
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
       const char = userId.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
@@ -635,12 +632,13 @@ export class ABTestingFramework {
 
       // Check for early statistical significance
       const statisticalAnalysis = await this.calculateStatisticalSignificance(test);
-      if (statisticalAnalysis.statisticallySignificant &&
-          test.statistics.totalParticipants >= 100) {
+      if (
+        statisticalAnalysis.statisticallySignificant &&
+        test.statistics.totalParticipants >= 100
+      ) {
         await this.stopTest(test.id, 'statistical_significance_reached');
         return;
       }
-
     } catch (error) {
       console.error('Error checking auto-stop conditions:', error);
     }
@@ -681,21 +679,26 @@ export class ABTestingFramework {
       recommendations.push({
         type: 'continue',
         title: 'Continue Testing',
-        description: 'Results are not yet statistically significant. Consider running the test longer or increasing sample size.',
+        description:
+          'Results are not yet statistically significant. Consider running the test longer or increasing sample size.',
         priority: 'medium'
       });
     }
 
     // Check for low conversion rates only if not statistically significant
     if (!statisticalAnalysis.statisticallySignificant) {
-      const avgConversionRate = Object.values(test.statistics.variantStats)
-        .reduce((sum, stats) => sum + stats.conversionRate, 0) / test.variants.length;
+      const avgConversionRate =
+        Object.values(test.statistics.variantStats).reduce(
+          (sum, stats) => sum + stats.conversionRate,
+          0
+        ) / test.variants.length;
 
       if (avgConversionRate < 10) {
         recommendations.push({
           type: 'optimization',
           title: 'Low Overall Performance',
-          description: 'All variants show low conversion rates. Consider testing more different approaches.',
+          description:
+            'All variants show low conversion rates. Consider testing more different approaches.',
           priority: 'high'
         });
       }
@@ -711,18 +714,18 @@ export class ABTestingFramework {
 
   erf(x) {
     // Approximation of the error function
-    const a1 =  0.254829592;
+    const a1 = 0.254829592;
     const a2 = -0.284496736;
-    const a3 =  1.421413741;
+    const a3 = 1.421413741;
     const a4 = -1.453152027;
-    const a5 =  1.061405429;
-    const p  =  0.3275911;
+    const a5 = 1.061405429;
+    const p = 0.3275911;
 
     const sign = x >= 0 ? 1 : -1;
     x = Math.abs(x);
 
     const t = 1.0 / (1.0 + p * x);
-    const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+    const y = 1.0 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
 
     return sign * y;
   }
@@ -730,13 +733,13 @@ export class ABTestingFramework {
   getZCritical(significanceLevel) {
     // Z-critical values for common significance levels
     const zValues = {
-      0.80: 1.282,
-      0.90: 1.645,
-      0.95: 1.960,
+      0.8: 1.282,
+      0.9: 1.645,
+      0.95: 1.96,
       0.99: 2.576
     };
 
-    return zValues[significanceLevel] || 1.960;
+    return zValues[significanceLevel] || 1.96;
   }
 
   async saveTest(test) {
@@ -778,7 +781,6 @@ export class ABTestingFramework {
       Object.entries(assignments).forEach(([key, assignment]) => {
         this.assignments.set(key, assignment);
       });
-
     } catch (error) {
       console.error('Error loading existing tests:', error);
     }

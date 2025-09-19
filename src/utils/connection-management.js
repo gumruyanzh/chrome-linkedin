@@ -135,7 +135,6 @@ export async function createConnectionRecord(connectionData) {
     });
 
     return connection;
-
   } catch (error) {
     console.error('Error creating connection record:', error);
     throw error;
@@ -169,7 +168,8 @@ export async function updateConnectionStatus(connectionId, newStatus, updateData
     if (newStatus === CONNECTION_STATUS.ACCEPTED) {
       connection.response.respondedAt = updateData.respondedAt || Date.now();
       connection.response.responseType = 'accepted';
-      connection.response.responseTime = connection.response.respondedAt - connection.connectionRequest.sentAt;
+      connection.response.responseTime =
+        connection.response.respondedAt - connection.connectionRequest.sentAt;
       connection.relationship.lastInteraction = Date.now();
 
       // Track acceptance event
@@ -183,15 +183,15 @@ export async function updateConnectionStatus(connectionId, newStatus, updateData
       if (updateData.scheduleFollowUp) {
         await scheduleFollowUp(connectionId, {
           type: FOLLOWUP_TYPES.THANK_YOU,
-          scheduledFor: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+          scheduledFor: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
           message: 'Thank connection for accepting'
         });
       }
-
     } else if (newStatus === CONNECTION_STATUS.DECLINED) {
       connection.response.respondedAt = updateData.respondedAt || Date.now();
       connection.response.responseType = 'declined';
-      connection.response.responseTime = connection.response.respondedAt - connection.connectionRequest.sentAt;
+      connection.response.responseTime =
+        connection.response.respondedAt - connection.connectionRequest.sentAt;
 
       await trackEvent(ANALYTICS_EVENTS.CONNECTION_DECLINED, {
         connectionId: connection.id,
@@ -208,7 +208,6 @@ export async function updateConnectionStatus(connectionId, newStatus, updateData
     await saveConnectionRecords(connections);
 
     return connection;
-
   } catch (error) {
     console.error('Error updating connection status:', error);
     throw error;
@@ -254,7 +253,6 @@ export async function getConnectionRecords(options = {}) {
       offset: options.offset || 0,
       limit: options.limit || total
     };
-
   } catch (error) {
     console.error('Error getting connection records:', error);
     return { connections: [], total: 0, offset: 0, limit: 0 };
@@ -304,7 +302,6 @@ export async function addConnectionNote(connectionId, note) {
     await saveConnectionRecords(connections.connections);
 
     return true;
-
   } catch (error) {
     console.error('Error adding connection note:', error);
     return false;
@@ -331,7 +328,6 @@ export async function updateConnectionTags(connectionId, tags) {
     await saveConnectionRecords(connections.connections);
 
     return true;
-
   } catch (error) {
     console.error('Error updating connection tags:', error);
     return false;
@@ -370,7 +366,6 @@ export async function scheduleFollowUp(connectionId, followUpData) {
 
     await saveConnectionRecords(connections.connections);
     return followUp;
-
   } catch (error) {
     console.error('Error scheduling follow-up:', error);
     throw error;
@@ -389,7 +384,9 @@ export async function getConnectionsRequiringFollowUp(options = {}) {
 
     return result.connections.filter(connection => {
       // Has follow-up required
-      if (!connection.followUp.isRequired) return false;
+      if (!connection.followUp.isRequired) {
+        return false;
+      }
 
       // Follow-up time has passed
       if (connection.followUp.nextFollowUp && connection.followUp.nextFollowUp <= now) {
@@ -398,10 +395,15 @@ export async function getConnectionsRequiringFollowUp(options = {}) {
 
       // Custom follow-up rules
       if (options.includeOverdue) {
-        const daysSinceConnection = (now - connection.connectionRequest.sentAt) / (24 * 60 * 60 * 1000);
+        const daysSinceConnection =
+          (now - connection.connectionRequest.sentAt) / (24 * 60 * 60 * 1000);
 
         // Auto follow-up for accepted connections after 7 days
-        if (connection.status === CONNECTION_STATUS.ACCEPTED && daysSinceConnection > 7 && !connection.followUp.lastFollowUp) {
+        if (
+          connection.status === CONNECTION_STATUS.ACCEPTED &&
+          daysSinceConnection > 7 &&
+          !connection.followUp.lastFollowUp
+        ) {
           return true;
         }
 
@@ -413,7 +415,6 @@ export async function getConnectionsRequiringFollowUp(options = {}) {
 
       return false;
     });
-
   } catch (error) {
     console.error('Error getting connections requiring follow-up:', error);
     return [];
@@ -434,9 +435,8 @@ export async function getConnectionAnalytics(options = {}) {
     let filteredConnections = connections;
     if (options.dateRange) {
       const { startDate, endDate } = options.dateRange;
-      filteredConnections = connections.filter(c =>
-        c.connectionRequest.sentAt >= startDate &&
-        c.connectionRequest.sentAt <= endDate
+      filteredConnections = connections.filter(
+        c => c.connectionRequest.sentAt >= startDate && c.connectionRequest.sentAt <= endDate
       );
     }
 
@@ -460,20 +460,28 @@ export async function getConnectionAnalytics(options = {}) {
 
     // Status breakdown
     Object.values(CONNECTION_STATUS).forEach(status => {
-      analytics.statusBreakdown[status] = filteredConnections.filter(c => c.status === status).length;
+      analytics.statusBreakdown[status] = filteredConnections.filter(
+        c => c.status === status
+      ).length;
     });
 
     // Category breakdown
     Object.values(CONNECTION_CATEGORIES).forEach(category => {
-      analytics.categoryBreakdown[category] = filteredConnections.filter(c => c.category === category).length;
+      analytics.categoryBreakdown[category] = filteredConnections.filter(
+        c => c.category === category
+      ).length;
     });
 
     // Response metrics
     const respondedConnections = filteredConnections.filter(c => c.response.respondedAt);
-    const acceptedConnections = filteredConnections.filter(c => c.status === CONNECTION_STATUS.ACCEPTED);
+    const acceptedConnections = filteredConnections.filter(
+      c => c.status === CONNECTION_STATUS.ACCEPTED
+    );
 
     if (respondedConnections.length > 0) {
-      analytics.averageResponseTime = respondedConnections.reduce((sum, c) => sum + (c.response.responseTime || 0), 0) / respondedConnections.length;
+      analytics.averageResponseTime =
+        respondedConnections.reduce((sum, c) => sum + (c.response.responseTime || 0), 0) /
+        respondedConnections.length;
       analytics.responseRate = respondedConnections.length / filteredConnections.length;
     }
 
@@ -486,8 +494,12 @@ export async function getConnectionAnalytics(options = {}) {
     analytics.topPerformingCampaigns = getTopPerformingCampaigns(filteredConnections);
 
     // Follow-up stats
-    analytics.followUpStats.required = filteredConnections.filter(c => c.followUp.isRequired).length;
-    analytics.followUpStats.completed = filteredConnections.filter(c => c.followUp.lastFollowUp).length;
+    analytics.followUpStats.required = filteredConnections.filter(
+      c => c.followUp.isRequired
+    ).length;
+    analytics.followUpStats.completed = filteredConnections.filter(
+      c => c.followUp.lastFollowUp
+    ).length;
 
     const overdueConnections = await getConnectionsRequiringFollowUp({ includeOverdue: true });
     analytics.followUpStats.overdue = overdueConnections.length;
@@ -496,7 +508,6 @@ export async function getConnectionAnalytics(options = {}) {
     analytics.insights = generateConnectionInsights(analytics, filteredConnections);
 
     return analytics;
-
   } catch (error) {
     console.error('Error getting connection analytics:', error);
     return null;
@@ -533,7 +544,9 @@ export async function exportConnections(options = {}) {
         category: connection.category,
         tags: connection.tags.join(', '),
         connectionDate: new Date(connection.connectionRequest.sentAt).toISOString(),
-        responseTime: connection.response.responseTime ? Math.round(connection.response.responseTime / (60 * 60 * 1000)) + ' hours' : '',
+        responseTime: connection.response.responseTime
+          ? Math.round(connection.response.responseTime / (60 * 60 * 1000)) + ' hours'
+          : '',
         notes: connection.notes
       };
 
@@ -558,7 +571,6 @@ export async function exportConnections(options = {}) {
       count: connections.length,
       format: options.format || 'json'
     };
-
   } catch (error) {
     console.error('Error exporting connections:', error);
     return {
@@ -591,13 +603,18 @@ function applyConnectionFilters(connections, filters) {
     // Tags filter
     if (filters.tags && filters.tags.length > 0) {
       const hasTag = filters.tags.some(tag => connection.tags.includes(tag));
-      if (!hasTag) return false;
+      if (!hasTag) {
+        return false;
+      }
     }
 
     // Date range filter
     if (filters.dateRange) {
       const { startDate, endDate } = filters.dateRange;
-      if (connection.connectionRequest.sentAt < startDate || connection.connectionRequest.sentAt > endDate) {
+      if (
+        connection.connectionRequest.sentAt < startDate ||
+        connection.connectionRequest.sentAt > endDate
+      ) {
         return false;
       }
     }
@@ -613,13 +630,14 @@ function applyConnectionFilters(connections, filters) {
 
 function searchConnections(connections, searchQuery) {
   const query = searchQuery.toLowerCase();
-  return connections.filter(connection =>
-    connection.name.toLowerCase().includes(query) ||
-    connection.title.toLowerCase().includes(query) ||
-    connection.company.toLowerCase().includes(query) ||
-    connection.location.toLowerCase().includes(query) ||
-    connection.notes.toLowerCase().includes(query) ||
-    connection.tags.some(tag => tag.toLowerCase().includes(query))
+  return connections.filter(
+    connection =>
+      connection.name.toLowerCase().includes(query) ||
+      connection.title.toLowerCase().includes(query) ||
+      connection.company.toLowerCase().includes(query) ||
+      connection.location.toLowerCase().includes(query) ||
+      connection.notes.toLowerCase().includes(query) ||
+      connection.tags.some(tag => tag.toLowerCase().includes(query))
   );
 }
 
@@ -665,29 +683,43 @@ function calculateInitialRelationshipScore(connectionData) {
   let score = 50; // Base score
 
   // Mutual connections boost
-  if (connectionData.mutualConnections > 10) score += 20;
-  else if (connectionData.mutualConnections > 5) score += 15;
-  else if (connectionData.mutualConnections > 0) score += 10;
+  if (connectionData.mutualConnections > 10) {
+    score += 20;
+  } else if (connectionData.mutualConnections > 5) {
+    score += 15;
+  } else if (connectionData.mutualConnections > 0) {
+    score += 10;
+  }
 
   // Same company boost
-  if (connectionData.company && connectionData.company.length > 0) score += 10;
+  if (connectionData.company && connectionData.company.length > 0) {
+    score += 10;
+  }
 
   // Same location boost
-  if (connectionData.location && connectionData.location.length > 0) score += 5;
+  if (connectionData.location && connectionData.location.length > 0) {
+    score += 5;
+  }
 
   // Premium account boost
-  if (connectionData.isPremium) score += 10;
+  if (connectionData.isPremium) {
+    score += 10;
+  }
 
   return Math.min(score, 100);
 }
 
 function extractFirstName(fullName) {
-  if (!fullName) return '';
+  if (!fullName) {
+    return '';
+  }
   return fullName.split(' ')[0];
 }
 
 function extractLastName(fullName) {
-  if (!fullName) return '';
+  if (!fullName) {
+    return '';
+  }
   const parts = fullName.split(' ');
   return parts.length > 1 ? parts.slice(1).join(' ') : '';
 }
@@ -801,7 +833,8 @@ function generateConnectionInsights(analytics, connections) {
   }
 
   // Fast response time insight
-  if (analytics.averageResponseTime < 24 * 60 * 60 * 1000) { // Less than 24 hours
+  if (analytics.averageResponseTime < 24 * 60 * 60 * 1000) {
+    // Less than 24 hours
     insights.push({
       type: 'positive',
       title: 'Quick Responses',

@@ -9,7 +9,7 @@ import { getAnalyticsSummary } from '../utils/analytics.js';
 let currentCampaigns = [];
 let selectedCampaigns = [];
 let currentView = 'grid';
-let currentFilter = {
+const currentFilter = {
   search: '',
   status: 'all',
   date: 'all'
@@ -43,7 +43,6 @@ async function loadDashboardData() {
     // Load message templates for campaign creation
     const templates = await getMessageTemplates();
     populateTemplateSelector(templates);
-
   } catch (error) {
     console.error('Error loading dashboard data:', error);
     currentCampaigns = [];
@@ -77,7 +76,9 @@ function setupEventListeners() {
   document.getElementById('start-later').addEventListener('change', toggleScheduleDateTime);
 
   // Campaign details modal
-  document.getElementById('close-details-modal').addEventListener('click', closeCampaignDetailsModal);
+  document
+    .getElementById('close-details-modal')
+    .addEventListener('click', closeCampaignDetailsModal);
 }
 
 function renderDashboard() {
@@ -159,9 +160,10 @@ function createCampaignCard(campaign) {
 
         <div class="flex items-center space-x-2">
           <button class="campaign-pause-btn p-1 text-gray-400 hover:text-gray-600" data-campaign-id="${campaign.id}" title="${campaign.status === 'active' ? 'Pause' : 'Resume'}">
-            ${campaign.status === 'active' ?
-              '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' :
-              '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2 4H7a2 2 0 01-2-2V8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2z"></path></svg>'
+            ${
+              campaign.status === 'active'
+                ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+                : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2 4H7a2 2 0 01-2-2V8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2z"></path></svg>'
             }
           </button>
           <button class="campaign-menu-btn p-1 text-gray-400 hover:text-gray-600" data-campaign-id="${campaign.id}">
@@ -285,7 +287,7 @@ function createCampaignListItem(campaign) {
 
 function setupCampaignCardEvents(element, campaign) {
   // Click to view details
-  element.addEventListener('click', (e) => {
+  element.addEventListener('click', e => {
     if (!e.target.closest('button') && !e.target.closest('input')) {
       openCampaignDetails(campaign);
     }
@@ -294,7 +296,7 @@ function setupCampaignCardEvents(element, campaign) {
   // Pause/Resume button
   const pauseBtn = element.querySelector('.campaign-pause-btn');
   if (pauseBtn) {
-    pauseBtn.addEventListener('click', (e) => {
+    pauseBtn.addEventListener('click', e => {
       e.stopPropagation();
       toggleCampaignStatus(campaign.id);
     });
@@ -303,7 +305,7 @@ function setupCampaignCardEvents(element, campaign) {
   // Menu button
   const menuBtn = element.querySelector('.campaign-menu-btn');
   if (menuBtn) {
-    menuBtn.addEventListener('click', (e) => {
+    menuBtn.addEventListener('click', e => {
       e.stopPropagation();
       showCampaignMenu(campaign.id, e.target);
     });
@@ -312,7 +314,7 @@ function setupCampaignCardEvents(element, campaign) {
   // Checkbox
   const checkbox = element.querySelector('.campaign-checkbox');
   if (checkbox) {
-    checkbox.addEventListener('change', (e) => {
+    checkbox.addEventListener('change', e => {
       if (e.target.checked) {
         selectedCampaigns.push(campaign.id);
       } else {
@@ -379,7 +381,6 @@ async function handleCreateCampaign(e) {
     closeCreateCampaignModal();
     renderDashboard();
     showSuccess('Campaign created successfully');
-
   } catch (error) {
     console.error('Error creating campaign:', error);
     showError('Failed to create campaign');
@@ -389,7 +390,7 @@ async function handleCreateCampaign(e) {
 async function toggleCampaignStatus(campaignId) {
   try {
     const campaign = currentCampaigns.find(c => c.id === campaignId);
-    if (!campaign) return;
+    if (!campaign) {return;}
 
     if (campaign.status === 'active') {
       campaign.status = 'paused';
@@ -401,7 +402,6 @@ async function toggleCampaignStatus(campaignId) {
 
     await saveCampaigns();
     renderDashboard();
-
   } catch (error) {
     console.error('Error toggling campaign status:', error);
     showError('Failed to update campaign status');
@@ -419,7 +419,6 @@ async function startCampaign(campaignId) {
     if (!response.success) {
       throw new Error(response.error || 'Failed to start campaign');
     }
-
   } catch (error) {
     console.error('Error starting campaign:', error);
     throw error;
@@ -437,7 +436,6 @@ async function pauseCampaign(campaignId) {
     if (!response.success) {
       throw new Error(response.error || 'Failed to pause campaign');
     }
-
   } catch (error) {
     console.error('Error pausing campaign:', error);
     throw error;
@@ -530,7 +528,8 @@ function applyFilters(campaigns) {
     // Search filter
     if (currentFilter.search) {
       const searchTerm = currentFilter.search.toLowerCase();
-      const campaignText = `${campaign.name} ${formatTargetAudience(campaign.targetAudience)}`.toLowerCase();
+      const campaignText =
+        `${campaign.name} ${formatTargetAudience(campaign.targetAudience)}`.toLowerCase();
       if (!campaignText.includes(searchTerm)) {
         return false;
       }
@@ -547,23 +546,23 @@ function applyFilters(campaigns) {
       const now = new Date();
 
       switch (currentFilter.date) {
-        case 'today':
-          if (campaignDate.toDateString() !== now.toDateString()) {
-            return false;
-          }
-          break;
-        case 'week':
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          if (campaignDate < weekAgo) {
-            return false;
-          }
-          break;
-        case 'month':
-          const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-          if (campaignDate < monthAgo) {
-            return false;
-          }
-          break;
+      case 'today':
+        if (campaignDate.toDateString() !== now.toDateString()) {
+          return false;
+        }
+        break;
+      case 'week':
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (campaignDate < weekAgo) {
+          return false;
+        }
+        break;
+      case 'month':
+        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        if (campaignDate < monthAgo) {
+          return false;
+        }
+        break;
       }
     }
 
@@ -572,7 +571,11 @@ function applyFilters(campaigns) {
 }
 
 function calculateCampaignProgress(campaign) {
-  const totalTargets = campaign.stats.sent + campaign.stats.pending + campaign.stats.accepted + campaign.stats.declined;
+  const totalTargets =
+    campaign.stats.sent +
+    campaign.stats.pending +
+    campaign.stats.accepted +
+    campaign.stats.declined;
   const completed = campaign.stats.sent + campaign.stats.accepted + campaign.stats.declined;
 
   if (totalTargets === 0) {
@@ -610,10 +613,10 @@ function getStatusIcon(status) {
 
 function formatTargetAudience(audience) {
   const parts = [];
-  if (audience.keywords) parts.push(audience.keywords);
-  if (audience.location) parts.push(audience.location);
-  if (audience.company) parts.push(audience.company);
-  if (audience.industry) parts.push(audience.industry);
+  if (audience.keywords) {parts.push(audience.keywords);}
+  if (audience.location) {parts.push(audience.location);}
+  if (audience.company) {parts.push(audience.company);}
+  if (audience.industry) {parts.push(audience.industry);}
 
   return parts.join(' • ') || 'All LinkedIn users';
 }
@@ -624,9 +627,9 @@ function formatDate(timestamp) {
   const diffTime = Math.abs(now - date);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 1) return 'Today';
-  if (diffDays === 2) return 'Yesterday';
-  if (diffDays <= 7) return `${diffDays} days ago`;
+  if (diffDays === 1) {return 'Today';}
+  if (diffDays === 2) {return 'Yesterday';}
+  if (diffDays <= 7) {return `${diffDays} days ago`;}
 
   return date.toLocaleDateString();
 }
@@ -638,8 +641,12 @@ function validateCampaignData(data) {
     errors.push('Campaign name is required');
   }
 
-  if (!data.targetAudience.keywords && !data.targetAudience.location &&
-      !data.targetAudience.company && !data.targetAudience.industry) {
+  if (
+    !data.targetAudience.keywords &&
+    !data.targetAudience.location &&
+    !data.targetAudience.company &&
+    !data.targetAudience.industry
+  ) {
     errors.push('At least one targeting criterion is required');
   }
 
@@ -821,7 +828,7 @@ function showSuccess(message) {
 
 // Make functions available globally for inline event handlers
 window.toggleCampaignStatus = toggleCampaignStatus;
-window.editCampaign = function(campaignId) {
+window.editCampaign = function (campaignId) {
   console.log('Edit campaign:', campaignId);
   // Implementation would open edit modal
 };

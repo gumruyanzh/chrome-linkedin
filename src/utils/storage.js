@@ -22,7 +22,33 @@ export const STORAGE_KEYS = {
   REPORTS: 'reports',
   CONVERSATIONS: 'conversations',
   FOLLOWUP_SEQUENCES: 'followup_sequences',
-  RESPONSE_TEMPLATES: 'response_templates'
+  RESPONSE_TEMPLATES: 'response_templates',
+  // Task 6.3 & 6.4: Error Reporting and Crash Analytics
+  ERRORS: 'errors',
+  CRASHES: 'crashes',
+  PERFORMANCE: 'performance',
+  MEMORY: 'memory',
+  HEALTH: 'health',
+  RECOVERY: 'recovery',
+  // Task 6.5: Enhanced A/B Testing Framework
+  AB_TEST_CONFIGS: 'ab_test_configs',
+  AB_TEST_RESULTS: 'ab_test_results',
+  AB_TEST_STATISTICS: 'ab_test_statistics',
+  AB_TEST_SAMPLE_SIZES: 'ab_test_sample_sizes',
+  AB_TEST_MONITORING: 'ab_test_monitoring',
+  // Task 6.6: User Feedback Collection and Sentiment Analysis
+  USER_FEEDBACK: 'user_feedback',
+  FEEDBACK_SENTIMENT: 'feedback_sentiment',
+  FEEDBACK_CATEGORIES: 'feedback_categories',
+  FEEDBACK_ANALYTICS: 'feedback_analytics',
+  USER_SATISFACTION: 'user_satisfaction',
+  // Task 6.7: Performance Optimization Systems
+  PERFORMANCE_OPTIMIZATION: 'performance_optimization',
+  PERFORMANCE_BUDGETS: 'performance_budgets',
+  BROWSER_CAPABILITIES: 'browser_capabilities',
+  OPTIMIZATION_HISTORY: 'optimization_history',
+  RESOURCE_CACHE: 'resource_cache',
+  NETWORK_STATS: 'network_stats'
 };
 
 /**

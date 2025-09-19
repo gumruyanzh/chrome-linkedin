@@ -8,24 +8,33 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="../styles/tailwind.css" rel="stylesheet">
+    <link href="../assets/vintage-typography.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 font-sans">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center">
-                    <i class="fab fa-linkedin text-blue-600 text-2xl mr-3"></i>
-                    <h1 class="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+<body class="bg-vintage-texture font-newspaper min-h-screen">
+    <!-- Vintage Newspaper Header -->
+    <header class="vintage-card newspaper-column single mb-vintage-xl border-b border-vintage-accent border-opacity-20 pb-vintage-lg">
+        <div class="max-w-7xl mx-auto px-vintage-lg sm:px-vintage-xl lg:px-vintage-2xl">
+            <div class="flex justify-between items-center py-vintage-lg">
+                <div class="flex items-center space-x-vintage-md">
+                    <i class="fab fa-linkedin text-vintage-sepia text-3xl"></i>
+                    <div>
+                        <h1 class="vintage-headline text-vintage-4xl font-newspaper font-bold text-vintage-ink mb-1">
+                            Analytics Chronicle
+                        </h1>
+                        <p class="vintage-caption text-vintage-sm text-vintage-accent font-newspaper italic">
+                            Professional Network Performance & Insights
+                        </p>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <select id="date-range" class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="flex items-center space-x-vintage-md">
+                    <select id="date-range" class="vintage-input border border-vintage-accent border-opacity-30 rounded-vintage px-vintage-md py-vintage-sm text-vintage-sm focus:outline-none focus:ring-2 focus:ring-vintage-sepia focus:border-vintage-sepia">
                         <option value="7">Last 7 days</option>
                         <option value="30" selected>Last 30 days</option>
                         <option value="90">Last 90 days</option>
                         <option value="custom">Custom range</option>
                     </select>
-                    <button id="refresh-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
+                    <button id="refresh-btn" class="vintage-button px-vintage-md py-vintage-sm rounded-vintage text-vintage-sm font-newspaper font-semibold transition-all duration-200">
                         <i class="fas fa-sync-alt mr-2"></i>Refresh
                     </button>
                 </div>
@@ -34,227 +43,246 @@
     </header>
 
     <!-- Custom Date Range Modal -->
-    <div id="date-range-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold mb-4">Select Date Range</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                        <input type="date" id="start-date" class="w-full border border-gray-300 rounded-md px-3 py-2">
+    <div id="date-range-modal" class="fixed inset-0 bg-vintage-ink bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-vintage-md">
+            <div class="vintage-card p-vintage-lg w-full max-w-md border border-vintage-accent border-opacity-30 shadow-vintage-lg">
+                <h3 class="vintage-subheadline text-vintage-lg font-newspaper font-semibold text-vintage-ink mb-vintage-md">Select Date Range</h3>
+                <div class="space-y-vintage-md">
+                    <div class="vintage-form-group">
+                        <label class="vintage-label text-vintage-sm text-vintage-accent font-newspaper mb-1">Start Date</label>
+                        <input type="date" id="start-date" class="vintage-input w-full border border-vintage-accent border-opacity-30 rounded-vintage px-vintage-md py-vintage-sm">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                        <input type="date" id="end-date" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                    <div class="vintage-form-group">
+                        <label class="vintage-label text-vintage-sm text-vintage-accent font-newspaper mb-1">End Date</label>
+                        <input type="date" id="end-date" class="vintage-input w-full border border-vintage-accent border-opacity-30 rounded-vintage px-vintage-md py-vintage-sm">
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button id="cancel-date-range" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-                    <button id="apply-date-range" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Apply</button>
+                <div class="flex justify-end space-x-vintage-md mt-vintage-lg">
+                    <button id="cancel-date-range" class="px-vintage-md py-vintage-sm text-vintage-accent hover:text-vintage-sepia font-newspaper transition-colors duration-200">Cancel</button>
+                    <button id="apply-date-range" class="vintage-button px-vintage-md py-vintage-sm rounded-vintage font-newspaper font-semibold">Apply</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 z-40 hidden">
+    <div id="loading-overlay" class="fixed inset-0 bg-vintage-paper bg-opacity-95 z-40 hidden">
         <div class="flex items-center justify-center min-h-screen">
             <div class="text-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p class="mt-4 text-gray-600">Loading analytics data...</p>
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-vintage-sepia mx-auto"></div>
+                <p class="mt-vintage-md vintage-body text-vintage-accent font-newspaper">Loading analytics data...</p>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-vintage-lg sm:px-vintage-xl lg:px-vintage-2xl py-vintage-xl">
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
+        <section class="newspaper-column single gap-vintage-lg mb-vintage-xl
+                       xs:newspaper-column xs:double xs:gap-vintage-md
+                       md:newspaper-column md:double md:gap-vintage-lg
+                       lg:newspaper-column lg:quadruple lg:gap-vintage-xl">
+            <div class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <div class="flex items-center mb-vintage-md">
+                    <div class="p-vintage-sm bg-vintage-sepia bg-opacity-20 rounded-vintage text-vintage-sepia text-2xl w-12 h-12 flex items-center justify-center">
+                        <i class="fas fa-user-plus"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Total Connections</p>
-                        <p id="total-connections" class="text-2xl font-bold text-gray-900">-</p>
-                        <p id="connections-change" class="text-sm text-gray-600"></p>
-                    </div>
+                </div>
+                <div class="space-y-1">
+                    <p class="vintage-label text-vintage-sm text-vintage-accent font-newspaper">Total Connections</p>
+                    <p id="total-connections" class="vintage-headline text-vintage-3xl font-bold text-vintage-ink font-newspaper">-</p>
+                    <p id="connections-change" class="vintage-caption text-vintage-xs font-newspaper text-vintage-sage">-</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+            <div class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <div class="flex items-center mb-vintage-md">
+                    <div class="p-vintage-sm bg-vintage-sage bg-opacity-20 rounded-vintage text-vintage-sage text-2xl w-12 h-12 flex items-center justify-center">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Acceptance Rate</p>
-                        <p id="acceptance-rate" class="text-2xl font-bold text-gray-900">-</p>
-                        <p id="acceptance-change" class="text-sm text-gray-600"></p>
-                    </div>
+                </div>
+                <div class="space-y-1">
+                    <p class="vintage-label text-vintage-sm text-vintage-accent font-newspaper">Acceptance Rate</p>
+                    <p id="acceptance-rate" class="vintage-headline text-vintage-3xl font-bold text-vintage-ink font-newspaper">-</p>
+                    <p id="acceptance-change" class="vintage-caption text-vintage-xs font-newspaper text-vintage-sage">-</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-envelope text-purple-600 text-2xl"></i>
+            <div class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <div class="flex items-center mb-vintage-md">
+                    <div class="p-vintage-sm bg-vintage-accent bg-opacity-20 rounded-vintage text-vintage-accent text-2xl w-12 h-12 flex items-center justify-center">
+                        <i class="fas fa-envelope"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Messages Sent</p>
-                        <p id="messages-sent" class="text-2xl font-bold text-gray-900">-</p>
-                        <p id="messages-change" class="text-sm text-gray-600"></p>
-                    </div>
+                </div>
+                <div class="space-y-1">
+                    <p class="vintage-label text-vintage-sm text-vintage-accent font-newspaper">Messages Sent</p>
+                    <p id="messages-sent" class="vintage-headline text-vintage-3xl font-bold text-vintage-ink font-newspaper">-</p>
+                    <p id="messages-change" class="vintage-caption text-vintage-xs font-newspaper text-vintage-sage">-</p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-reply text-orange-600 text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Response Rate</p>
-                        <p id="response-rate" class="text-2xl font-bold text-gray-900">-</p>
-                        <p id="response-change" class="text-sm text-gray-600"></p>
+            <div class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <div class="flex items-center mb-vintage-md">
+                    <div class="p-vintage-sm bg-vintage-sepia-dark bg-opacity-20 rounded-vintage text-vintage-sepia-dark text-2xl w-12 h-12 flex items-center justify-center">
+                        <i class="fas fa-reply"></i>
                     </div>
                 </div>
+                <div class="space-y-1">
+                    <p class="vintage-label text-vintage-sm text-vintage-accent font-newspaper">Response Rate</p>
+                    <p id="response-rate" class="vintage-headline text-vintage-3xl font-bold text-vintage-ink font-newspaper">-</p>
+                    <p id="response-change" class="vintage-caption text-vintage-xs font-newspaper text-vintage-sage">-</p>
+                </div>
             </div>
-        </div>
+        </section>
 
         <!-- Charts Row 1 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <section class="newspaper-column double gap-vintage-xl mb-vintage-xl">
             <!-- Connection Activity Chart -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Connection Activity</h3>
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="flex items-center justify-between mb-vintage-md border-b border-vintage-accent border-opacity-20 pb-vintage-sm">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Connection Activity</h3>
                     <div class="flex space-x-2">
-                        <button class="chart-period-btn text-sm px-3 py-1 rounded-md bg-blue-600 text-white" data-period="day">Daily</button>
-                        <button class="chart-period-btn text-sm px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100" data-period="week">Weekly</button>
+                        <button class="chart-period-btn vintage-body text-vintage-xs px-vintage-sm py-1 rounded-vintage bg-vintage-sepia text-vintage-paper font-newspaper font-medium" data-period="day">Daily</button>
+                        <button class="chart-period-btn vintage-body text-vintage-xs px-vintage-sm py-1 rounded-vintage text-vintage-accent hover:bg-vintage-accent hover:bg-opacity-10 font-newspaper" data-period="week">Weekly</button>
                     </div>
-                </div>
-                <div class="h-64">
+                </header>
+                <div class="h-64 bg-vintage-paper bg-opacity-30 rounded-vintage-sm p-vintage-sm">
                     <canvas id="connection-activity-chart"></canvas>
                 </div>
-            </div>
+            </article>
 
             <!-- Conversion Funnel -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Conversion Funnel</h3>
-                <div class="h-64">
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Conversion Funnel</h3>
+                </header>
+                <div class="h-64 bg-vintage-paper bg-opacity-30 rounded-vintage-sm p-vintage-sm">
                     <canvas id="conversion-funnel-chart"></canvas>
                 </div>
-            </div>
-        </div>
+            </article>
+        </section>
 
         <!-- Charts Row 2 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <section class="newspaper-column double gap-vintage-xl mb-vintage-xl">
             <!-- Performance by Time -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Best Performance Times</h3>
-                <div class="h-64">
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Best Performance Times</h3>
+                </header>
+                <div class="h-64 bg-vintage-paper bg-opacity-30 rounded-vintage-sm p-vintage-sm">
                     <canvas id="performance-time-chart"></canvas>
                 </div>
-            </div>
+            </article>
 
             <!-- Template Performance -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Template Performance</h3>
-                <div class="h-64">
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Template Performance</h3>
+                </header>
+                <div class="h-64 bg-vintage-paper bg-opacity-30 rounded-vintage-sm p-vintage-sm">
                     <canvas id="template-performance-chart"></canvas>
                 </div>
-            </div>
-        </div>
+            </article>
+        </section>
 
         <!-- Insights and Recommendations -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <section class="newspaper-column double gap-vintage-xl mb-vintage-xl">
             <!-- Insights -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Key Insights
-                </h3>
-                <div id="insights-container" class="space-y-3">
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">
+                        <i class="fas fa-lightbulb text-vintage-sepia mr-2"></i>Key Insights
+                    </h3>
+                </header>
+                <div id="insights-container" class="space-y-vintage-md">
                     <!-- Insights will be populated dynamically -->
                 </div>
-            </div>
+            </article>
 
             <!-- Recommendations -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                    <i class="fas fa-bullseye text-blue-500 mr-2"></i>Recommendations
-                </h3>
-                <div id="recommendations-container" class="space-y-3">
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">
+                        <i class="fas fa-bullseye text-vintage-accent mr-2"></i>Recommendations
+                    </h3>
+                </header>
+                <div id="recommendations-container" class="space-y-vintage-md">
                     <!-- Recommendations will be populated dynamically -->
                 </div>
-            </div>
-        </div>
+            </article>
+        </section>
 
         <!-- Detailed Analytics Tables -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section class="newspaper-column double gap-vintage-xl mb-vintage-xl">
             <!-- Campaign Performance -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Campaign Performance</h3>
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Campaign Performance</h3>
+                </header>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-vintage-accent divide-opacity-20">
+                        <thead class="bg-vintage-paper-dark">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connections</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Campaign</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Connections</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Rate</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Status</th>
                             </tr>
                         </thead>
-                        <tbody id="campaign-performance-table" class="bg-white divide-y divide-gray-200">
+                        <tbody id="campaign-performance-table" class="bg-vintage-paper divide-y divide-vintage-accent divide-opacity-10">
                             <!-- Campaign data will be populated dynamically -->
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </article>
 
             <!-- Template Analytics -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Template Analytics</h3>
+            <article class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+                <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                    <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Template Analytics</h3>
+                </header>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-vintage-accent divide-opacity-20">
+                        <thead class="bg-vintage-paper-dark">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Template</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trend</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Template</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Usage</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Success Rate</th>
+                                <th class="px-vintage-md py-vintage-sm text-left vintage-label text-vintage-xs text-vintage-accent uppercase tracking-wider font-newspaper">Trend</th>
                             </tr>
                         </thead>
-                        <tbody id="template-analytics-table" class="bg-white divide-y divide-gray-200">
+                        <tbody id="template-analytics-table" class="bg-vintage-paper divide-y divide-vintage-accent divide-opacity-10">
                             <!-- Template data will be populated dynamically -->
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </article>
+        </section>
 
         <!-- Export Section -->
-        <div class="mt-8 bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Export Data</h3>
-            <div class="flex flex-wrap gap-4">
-                <button id="export-csv" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+        <section class="vintage-card p-vintage-lg border border-vintage-accent border-opacity-10">
+            <header class="border-b border-vintage-accent border-opacity-20 pb-vintage-sm mb-vintage-md">
+                <h3 class="vintage-subheadline text-vintage-xl font-newspaper font-semibold text-vintage-ink">Export Data</h3>
+            </header>
+            <div class="flex flex-wrap gap-vintage-md">
+                <button id="export-csv" class="vintage-button px-vintage-md py-vintage-sm rounded-vintage font-newspaper font-semibold transition-all duration-200">
                     <i class="fas fa-file-csv mr-2"></i>Export CSV
                 </button>
-                <button id="export-json" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                <button id="export-json" class="border border-vintage-accent text-vintage-accent bg-vintage-paper px-vintage-md py-vintage-sm rounded-vintage font-newspaper font-medium hover:bg-vintage-accent hover:text-vintage-paper transition-all duration-200">
                     <i class="fas fa-file-code mr-2"></i>Export JSON
                 </button>
-                <button id="export-pdf" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+                <button id="export-pdf" class="border border-vintage-sepia-dark text-vintage-sepia-dark bg-vintage-paper px-vintage-md py-vintage-sm rounded-vintage font-newspaper font-medium hover:bg-vintage-sepia-dark hover:text-vintage-paper transition-all duration-200">
                     <i class="fas fa-file-pdf mr-2"></i>Export PDF Report
                 </button>
             </div>
-        </div>
+        </section>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="text-center text-sm text-gray-500">
-                <p>&copy; 2025 LinkedIn Chrome Extension Analytics. Last updated: <span id="last-updated"></span></p>
+    <footer class="vintage-card border-t border-vintage-accent border-opacity-20 mt-vintage-2xl">
+        <div class="max-w-7xl mx-auto px-vintage-lg sm:px-vintage-xl lg:px-vintage-2xl py-vintage-lg">
+            <div class="text-center vintage-fine-print text-vintage-accent font-newspaper">
+                <p>&copy; 2025 LinkedIn Chronicle Analytics. Last updated: <span id="last-updated" class="text-vintage-ink font-medium"></span></p>
             </div>
         </div>
     </footer>

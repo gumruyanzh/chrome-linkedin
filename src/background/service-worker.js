@@ -42,8 +42,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'GET_ANALYTICS':
       handleGetAnalytics(sendResponse);
       break;
+    case 'GET_ANALYTICS_SUMMARY':
+      handleGetAnalyticsSummary(sendResponse);
+      break;
+    case 'FORWARD_TO_CONTENT':
+      handleForwardToContent(message, sender, sendResponse);
+      break;
     default:
       console.warn('Unknown message type:', message.type);
+      sendResponse({ success: false, error: 'Unknown message type' });
   }
   return true; // Indicates we will send a response asynchronously
 });
@@ -89,6 +96,49 @@ async function handleGetAnalytics(sendResponse) {
   try {
     const result = await chrome.storage.local.get('analytics');
     sendResponse({ success: true, data: result.analytics || [] });
+  } catch (error) {
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+// Analytics summary for popup display
+async function handleGetAnalyticsSummary(sendResponse) {
+  try {
+    const result = await chrome.storage.local.get('analytics');
+    const analytics = result.analytics || [];
+
+    // Calculate today's connections
+    const today = new Date().toDateString();
+    const todayConnections = analytics.filter(
+      event =>
+        event.type === 'connection_sent' && new Date(event.timestamp).toDateString() === today
+    );
+
+    // Calculate accepted connections (approximate)
+    const acceptedConnections = analytics.filter(event => event.type === 'connection_accepted');
+
+    const summary = {
+      connectionsSent: todayConnections.length,
+      connectionsAccepted: acceptedConnections.length,
+      totalEvents: analytics.length
+    };
+
+    sendResponse({ success: true, data: summary });
+  } catch (error) {
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+// Forward messages to content scripts
+async function handleForwardToContent(message, sender, sendResponse) {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      const response = await chrome.tabs.sendMessage(tab.id, message.data);
+      sendResponse(response);
+    } else {
+      sendResponse({ success: false, error: 'No active tab found' });
+    }
   } catch (error) {
     sendResponse({ success: false, error: error.message });
   }

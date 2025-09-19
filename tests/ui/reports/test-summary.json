@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-09-18T21:52:03.313Z",
+  "environment": {
+    "nodeVersion": "v24.4.1",
+    "platform": "darwin",
+    "ci": false
+  },
+  "testRun": {
+    "completed": true,
+    "duration": 5.231049125,
+    "memoryUsage": {
+      "rss": 187924480,
+      "heapTotal": 127680512,
+      "heapUsed": 66574376,
+      "external": 7553909,
+      "arrayBuffers": 3866630
+    }
+  }
+}

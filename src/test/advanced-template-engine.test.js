@@ -18,7 +18,8 @@ describe('Advanced Template Engine - Task 3.1', () => {
 
   describe('Complex Variable Substitution', () => {
     test('should handle nested profile data variables', async () => {
-      const template = 'Hi {{profile.name}}, I see you work at {{profile.company.name}} in {{profile.location.city}}.';
+      const template =
+        'Hi {{profile.name}}, I see you work at {{profile.company.name}} in {{profile.location.city}}.';
       const profileData = {
         profile: {
           name: 'John Doe',
@@ -32,7 +33,8 @@ describe('Advanced Template Engine - Task 3.1', () => {
     });
 
     test('should handle mutual connections data', async () => {
-      const template = 'Hi {{name}}, I noticed we have {{mutualConnections.count}} mutual connections including {{mutualConnections.featured.0.name}}.';
+      const template =
+        'Hi {{name}}, I noticed we have {{mutualConnections.count}} mutual connections including {{mutualConnections.featured.0.name}}.';
       const profileData = {
         name: 'Jane Smith',
         mutualConnections: {
@@ -45,11 +47,14 @@ describe('Advanced Template Engine - Task 3.1', () => {
       };
 
       const result = await processAdvancedTemplate(template, profileData);
-      expect(result).toBe('Hi Jane Smith, I noticed we have 5 mutual connections including Alice Johnson.');
+      expect(result).toBe(
+        'Hi Jane Smith, I noticed we have 5 mutual connections including Alice Johnson.'
+      );
     });
 
     test('should handle array iteration in templates', async () => {
-      const template = 'Your skills in {{#each skills}}{{name}}{{#unless @last}}, {{/unless}}{{/each}} are impressive.';
+      const template =
+        'Your skills in {{#each skills}}{{name}}{{#unless @last}}, {{/unless}}{{/each}} are impressive.';
       const profileData = {
         skills: [
           { name: 'JavaScript', endorsements: 15 },
@@ -74,7 +79,8 @@ describe('Advanced Template Engine - Task 3.1', () => {
     });
 
     test('should handle numeric formatting and calculations', async () => {
-      const template = 'With {{add experience.years education.years}} years of combined experience and education.';
+      const template =
+        'With {{add experience.years education.years}} years of combined experience and education.';
       const profileData = {
         experience: { years: 8 },
         education: { years: 4 }
@@ -122,7 +128,8 @@ describe('Advanced Template Engine - Task 3.1', () => {
     });
 
     test('should handle template personalization scoring', async () => {
-      const template = 'Hi {{name}}, I see we both work in {{industry}} and have {{mutualConnections.count}} connections in common.';
+      const template =
+        'Hi {{name}}, I see we both work in {{industry}} and have {{mutualConnections.count}} connections in common.';
       const profileData = {
         name: 'John Doe',
         industry: 'Technology',
@@ -135,7 +142,8 @@ describe('Advanced Template Engine - Task 3.1', () => {
     });
 
     test('should provide fallback values for missing data', async () => {
-      const template = 'Hi {{name || "there"}}, interested in connecting about {{industry || "your field"}}.';
+      const template =
+        'Hi {{name || "there"}}, interested in connecting about {{industry || "your field"}}.';
       const profileData = {
         name: 'John Doe'
         // industry is missing
@@ -146,7 +154,8 @@ describe('Advanced Template Engine - Task 3.1', () => {
     });
 
     test('should handle multiple fallback options', async () => {
-      const template = 'Regarding {{company.name || profile.currentCompany || "your current role"}}.';
+      const template =
+        'Regarding {{company.name || profile.currentCompany || "your current role"}}.';
       const profileData = {
         profile: { currentCompany: 'Tech Startup' }
         // company.name is missing
@@ -168,9 +177,7 @@ describe('Advanced Template Engine - Task 3.1', () => {
           { company: 'Tech Corp', title: 'Senior Software Engineer', duration: '2 years' },
           { company: 'StartupXYZ', title: 'Software Developer', duration: '3 years' }
         ],
-        education: [
-          { school: 'Stanford University', degree: 'MS Computer Science' }
-        ],
+        education: [{ school: 'Stanford University', degree: 'MS Computer Science' }],
         skills: ['JavaScript', 'React', 'Node.js', 'Python'],
         mutualConnections: 8
       };
@@ -236,10 +243,13 @@ describe('Advanced Template Engine - Task 3.1', () => {
 
   describe('Template Performance Optimization', () => {
     test('should optimize template rendering performance', async () => {
-      const template = 'Complex template with {{name}} and {{#each skills}}{{name}}{{/each}} and {{company.name}}.';
+      const template =
+        'Complex template with {{name}} and {{#each skills}}{{name}}{{/each}} and {{company.name}}.';
       const profileData = {
         name: 'John Doe',
-        skills: Array(100).fill(0).map((_, i) => ({ name: `Skill${i}` })),
+        skills: Array(100)
+          .fill(0)
+          .map((_, i) => ({ name: `Skill${i}` })),
         company: { name: 'Tech Corp' }
       };
 
@@ -271,10 +281,12 @@ describe('Advanced Template Engine - Task 3.1', () => {
 
     test('should handle memory-efficient batch processing', async () => {
       const template = 'Hi {{name}} from {{company}}.';
-      const profiles = Array(1000).fill(0).map((_, i) => ({
-        name: `Person${i}`,
-        company: `Company${i}`
-      }));
+      const profiles = Array(1000)
+        .fill(0)
+        .map((_, i) => ({
+          name: `Person${i}`,
+          company: `Company${i}`
+        }));
 
       const results = await optimizeTemplatePerformance(template, profiles, { batch: true });
 
@@ -378,10 +390,12 @@ describe('Advanced Template Engine - Task 3.1', () => {
     test('should handle very large profile datasets', async () => {
       const largeProfileData = {
         name: 'John Doe',
-        connections: Array(10000).fill(0).map((_, i) => ({
-          name: `Connection${i}`,
-          company: `Company${i}`
-        }))
+        connections: Array(10000)
+          .fill(0)
+          .map((_, i) => ({
+            name: `Connection${i}`,
+            company: `Company${i}`
+          }))
       };
 
       const template = 'Hi {{name}}, you have {{connections.length}} connections.';
@@ -420,24 +434,31 @@ describe('Advanced Template Engine - Task 3.1', () => {
   describe('A/B Testing Framework Integration', () => {
     test('should support template variant selection', async () => {
       const templateVariants = [
-        { id: 'A', template: 'Hi {{name}}, let\'s connect!' },
-        { id: 'B', template: 'Hello {{name}}, I\'d love to connect.' },
+        { id: 'A', template: "Hi {{name}}, let's connect!" },
+        { id: 'B', template: "Hello {{name}}, I'd love to connect." },
         { id: 'C', template: 'Hey {{name}}, interested in connecting?' }
       ];
 
       const profileData = { name: 'John Doe' };
 
       // Test that we get consistent variant selection for same profile
-      const result1 = await processAdvancedTemplate(templateVariants, profileData, { abTest: true });
-      const result2 = await processAdvancedTemplate(templateVariants, profileData, { abTest: true });
+      const result1 = await processAdvancedTemplate(templateVariants, profileData, {
+        abTest: true
+      });
+      const result2 = await processAdvancedTemplate(templateVariants, profileData, {
+        abTest: true
+      });
 
       expect(result1).toBe(result2);
-      expect(['Hi John Doe, let\'s connect!', 'Hello John Doe, I\'d love to connect.', 'Hey John Doe, interested in connecting?'])
-        .toContain(result1);
+      expect([
+        "Hi John Doe, let's connect!",
+        "Hello John Doe, I'd love to connect.",
+        'Hey John Doe, interested in connecting?'
+      ]).toContain(result1);
     });
 
     test('should track template performance metrics', async () => {
-      const template = 'Hi {{name}}, let\'s connect!';
+      const template = "Hi {{name}}, let's connect!";
       const profileData = { name: 'John Doe' };
 
       const result = await processAdvancedTemplate(template, profileData, {
@@ -445,7 +466,7 @@ describe('Advanced Template Engine - Task 3.1', () => {
         templateId: 'test-template-001'
       });
 
-      expect(result.message).toBe('Hi John Doe, let\'s connect!');
+      expect(result.message).toBe("Hi John Doe, let's connect!");
       expect(result.performance).toMatchObject({
         renderTime: expect.any(Number),
         templateId: 'test-template-001',

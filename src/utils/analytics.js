@@ -26,8 +26,8 @@ export const ANALYTICS_EVENTS = {
  */
 export async function trackEvent(eventType, eventData = {}) {
   try {
-    const analytics = await getStorageData(STORAGE_KEYS.ANALYTICS);
-    const analyticsData = analytics.analytics || [];
+    const result = await getStorageData(STORAGE_KEYS.ANALYTICS);
+    const analyticsData = result.analytics || [];
 
     const event = {
       id: generateEventId(),
@@ -60,15 +60,18 @@ export async function getAnalyticsSummary(days = 30) {
     const analytics = await getStorageData(STORAGE_KEYS.ANALYTICS);
     const analyticsData = analytics.analytics || [];
 
-    const cutoffDate = Date.now() - (days * 24 * 60 * 60 * 1000);
+    const cutoffDate = Date.now() - days * 24 * 60 * 60 * 1000;
     const filteredData = analyticsData.filter(event => event.timestamp >= cutoffDate);
 
     const summary = {
       totalEvents: filteredData.length,
       connectionsSent: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_SENT).length,
-      connectionsAccepted: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_ACCEPTED).length,
-      connectionsDeclined: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_DECLINED).length,
-      connectionsFailed: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_FAILED).length,
+      connectionsAccepted: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_ACCEPTED)
+        .length,
+      connectionsDeclined: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_DECLINED)
+        .length,
+      connectionsFailed: filteredData.filter(e => e.type === ANALYTICS_EVENTS.CONNECTION_FAILED)
+        .length,
       acceptanceRate: 0,
       averageDaily: 0,
       peakDay: null,
@@ -87,8 +90,9 @@ export async function getAnalyticsSummary(days = 30) {
 
     // Find peak day
     const dailyStats = getDailyStats(filteredData);
-    summary.peakDay = Object.entries(dailyStats)
-      .sort(([,a], [,b]) => b.connections - a.connections)[0];
+    summary.peakDay = Object.entries(dailyStats).sort(
+      ([, a], [, b]) => b.connections - a.connections
+    )[0];
 
     return summary;
   } catch (error) {

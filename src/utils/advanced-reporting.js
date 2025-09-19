@@ -87,7 +87,6 @@ export class AdvancedReportingSystem {
       await this.saveReportTemplates();
 
       return template;
-
     } catch (error) {
       console.error('Error creating report template:', error);
       throw new Error(`Failed to create report template: ${error.message}`);
@@ -119,7 +118,11 @@ export class AdvancedReportingSystem {
       });
 
       // Apply filters
-      const filteredData = this.applyFilters(analyticsData, template.filters, options.additionalFilters);
+      const filteredData = this.applyFilters(
+        analyticsData,
+        template.filters,
+        options.additionalFilters
+      );
 
       // Generate report content
       const reportContent = await this.generateReportContent(template, filteredData, options);
@@ -156,7 +159,6 @@ export class AdvancedReportingSystem {
       await this.saveReportHistory();
 
       return report;
-
     } catch (error) {
       console.error('Error generating report:', error);
       throw new Error(`Failed to generate report: ${error.message}`);
@@ -196,7 +198,6 @@ export class AdvancedReportingSystem {
       await this.saveScheduledReports();
 
       return schedule;
-
     } catch (error) {
       console.error('Error scheduling report:', error);
       throw new Error(`Failed to schedule report: ${error.message}`);
@@ -211,7 +212,7 @@ export class AdvancedReportingSystem {
   async generateExecutiveSummary(options = {}) {
     try {
       const dateRange = options.dateRange || {
-        startDate: Date.now() - (30 * 24 * 60 * 60 * 1000), // 30 days
+        startDate: Date.now() - 30 * 24 * 60 * 60 * 1000, // 30 days
         endDate: Date.now()
       };
 
@@ -246,7 +247,10 @@ export class AdvancedReportingSystem {
             metric: 'Connection Acceptance Rate',
             value: `${analyticsData.summary.acceptanceRate}%`,
             trend: this.calculateTrend(analyticsData.summary.acceptanceRate, 'acceptance_rate'),
-            status: this.getPerformanceStatus(analyticsData.summary.acceptanceRate, 'acceptance_rate')
+            status: this.getPerformanceStatus(
+              analyticsData.summary.acceptanceRate,
+              'acceptance_rate'
+            )
           },
           {
             metric: 'Message Response Rate',
@@ -257,8 +261,14 @@ export class AdvancedReportingSystem {
           {
             metric: 'Daily Activity',
             value: `${analyticsData.summary.averageConnectionsPerDay.toFixed(1)} connections/day`,
-            trend: this.calculateTrend(analyticsData.summary.averageConnectionsPerDay, 'daily_activity'),
-            status: this.getPerformanceStatus(analyticsData.summary.averageConnectionsPerDay, 'daily_activity')
+            trend: this.calculateTrend(
+              analyticsData.summary.averageConnectionsPerDay,
+              'daily_activity'
+            ),
+            status: this.getPerformanceStatus(
+              analyticsData.summary.averageConnectionsPerDay,
+              'daily_activity'
+            )
           }
         ],
 
@@ -290,7 +300,6 @@ export class AdvancedReportingSystem {
       };
 
       return executiveSummary;
-
     } catch (error) {
       console.error('Error generating executive summary:', error);
       throw new Error(`Failed to generate executive summary: ${error.message}`);
@@ -334,7 +343,9 @@ export class AdvancedReportingSystem {
         metrics: this.extractMetrics(filteredData, metrics),
 
         // Time Series Data (if requested)
-        timeSeries: includeCharts ? this.formatTimeSeriesForChart(filteredData.timeSeries, groupBy) : null,
+        timeSeries: includeCharts
+          ? this.formatTimeSeriesForChart(filteredData.timeSeries, groupBy)
+          : null,
 
         // Insights (if requested)
         insights: includeInsights ? filteredData.insights : null,
@@ -355,7 +366,6 @@ export class AdvancedReportingSystem {
       };
 
       return customReport;
-
     } catch (error) {
       console.error('Error generating custom report:', error);
       throw new Error(`Failed to generate custom report: ${error.message}`);
@@ -401,7 +411,6 @@ export class AdvancedReportingSystem {
 
       delivery.status = 'delivered';
       return delivery;
-
     } catch (error) {
       console.error('Error delivering report:', error);
       return {
@@ -459,7 +468,6 @@ export class AdvancedReportingSystem {
           totalPages: Math.ceil(history.length / limit)
         }
       };
-
     } catch (error) {
       console.error('Error getting report history:', error);
       return { reports: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } };
@@ -488,8 +496,14 @@ export class AdvancedReportingSystem {
 
   validateSections(sections) {
     const validSections = [
-      'summary', 'charts', 'insights', 'recommendations',
-      'campaigns', 'templates', 'performance', 'trends'
+      'summary',
+      'charts',
+      'insights',
+      'recommendations',
+      'campaigns',
+      'templates',
+      'performance',
+      'trends'
     ];
 
     if (!Array.isArray(sections)) {
@@ -526,22 +540,22 @@ export class AdvancedReportingSystem {
         };
       case REPORT_TYPES.WEEKLY:
         return {
-          startDate: now - (7 * day),
+          startDate: now - 7 * day,
           endDate: now
         };
       case REPORT_TYPES.MONTHLY:
         return {
-          startDate: now - (30 * day),
+          startDate: now - 30 * day,
           endDate: now
         };
       case REPORT_TYPES.QUARTERLY:
         return {
-          startDate: now - (90 * day),
+          startDate: now - 90 * day,
           endDate: now
         };
       default:
         return {
-          startDate: now - (30 * day),
+          startDate: now - 30 * day,
           endDate: now
         };
     }
@@ -729,22 +743,38 @@ export class AdvancedReportingSystem {
   calculateTrend(currentValue, metric) {
     // Simplified trend calculation
     // In a real implementation, you'd compare with historical data
-    if (currentValue > 50) return 'up';
-    if (currentValue < 20) return 'down';
+    if (currentValue > 50) {
+      return 'up';
+    }
+    if (currentValue < 20) {
+      return 'down';
+    }
     return 'stable';
   }
 
   getPerformanceStatus(value, metric) {
     switch (metric) {
       case 'acceptance_rate':
-        if (value >= 30) return 'excellent';
-        if (value >= 20) return 'good';
-        if (value >= 10) return 'fair';
+        if (value >= 30) {
+          return 'excellent';
+        }
+        if (value >= 20) {
+          return 'good';
+        }
+        if (value >= 10) {
+          return 'fair';
+        }
         return 'poor';
       case 'response_rate':
-        if (value >= 25) return 'excellent';
-        if (value >= 15) return 'good';
-        if (value >= 8) return 'fair';
+        if (value >= 25) {
+          return 'excellent';
+        }
+        if (value >= 15) {
+          return 'good';
+        }
+        if (value >= 8) {
+          return 'fair';
+        }
         return 'poor';
       default:
         return 'unknown';
@@ -819,9 +849,12 @@ export class AdvancedReportingSystem {
 
   startScheduleChecker() {
     // Check every hour for scheduled reports
-    setInterval(() => {
-      this.checkScheduledReports();
-    }, 60 * 60 * 1000);
+    setInterval(
+      () => {
+        this.checkScheduledReports();
+      },
+      60 * 60 * 1000
+    );
   }
 
   async checkScheduledReports() {

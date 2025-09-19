@@ -97,7 +97,6 @@ export async function createSearchProfile(profileData = {}) {
     await saveSearchProfiles(profiles);
 
     return profile;
-
   } catch (error) {
     console.error('Error creating search profile:', error);
     throw error;
@@ -120,19 +119,18 @@ export async function getSearchProfiles(options = {}) {
     }
 
     if (options.tags && options.tags.length > 0) {
-      profiles = profiles.filter(p =>
-        options.tags.some(tag => p.metadata.tags.includes(tag))
-      );
+      profiles = profiles.filter(p => options.tags.some(tag => p.metadata.tags.includes(tag)));
     }
 
     if (options.search) {
       const searchTerm = options.search.toLowerCase();
-      profiles = profiles.filter(p =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.description.toLowerCase().includes(searchTerm) ||
-        Object.values(p.criteria).some(value =>
-          typeof value === 'string' && value.toLowerCase().includes(searchTerm)
-        )
+      profiles = profiles.filter(
+        p =>
+          p.name.toLowerCase().includes(searchTerm) ||
+          p.description.toLowerCase().includes(searchTerm) ||
+          Object.values(p.criteria).some(
+            value => typeof value === 'string' && value.toLowerCase().includes(searchTerm)
+          )
       );
     }
 
@@ -142,7 +140,6 @@ export async function getSearchProfiles(options = {}) {
     }
 
     return profiles;
-
   } catch (error) {
     console.error('Error getting search profiles:', error);
     return [];
@@ -200,7 +197,6 @@ export async function updateSearchProfile(profileId, updates) {
     await saveSearchProfiles(profiles);
 
     return updatedProfile;
-
   } catch (error) {
     console.error('Error updating search profile:', error);
     throw error;
@@ -225,7 +221,6 @@ export async function deleteSearchProfile(profileId) {
     await saveSearchProfiles(profiles);
 
     return true;
-
   } catch (error) {
     console.error('Error deleting search profile:', error);
     return false;
@@ -271,7 +266,6 @@ export async function duplicateSearchProfile(profileId, options = {}) {
     await saveSearchProfiles(profiles);
 
     return duplicatedProfile;
-
   } catch (error) {
     console.error('Error duplicating search profile:', error);
     throw error;
@@ -308,7 +302,6 @@ export async function executeSearchProfile(profileOrId) {
       profile,
       timestamp: Date.now()
     };
-
   } catch (error) {
     console.error('Error executing search profile:', error);
     return {
@@ -424,9 +417,10 @@ export async function importSearchProfiles(profilesData, options = {}) {
       try {
         // Check for duplicates if enabled
         if (options.preventDuplicates) {
-          const isDuplicate = existingProfiles.some(existing =>
-            existing.name === profileData.name ||
-            JSON.stringify(existing.criteria) === JSON.stringify(profileData.criteria)
+          const isDuplicate = existingProfiles.some(
+            existing =>
+              existing.name === profileData.name ||
+              JSON.stringify(existing.criteria) === JSON.stringify(profileData.criteria)
           );
 
           if (isDuplicate) {
@@ -438,7 +432,6 @@ export async function importSearchProfiles(profilesData, options = {}) {
         // Create new profile
         await createSearchProfile(profileData);
         results.imported++;
-
       } catch (error) {
         results.errors.push({
           profile: profileData.name || 'Unnamed',
@@ -449,7 +442,6 @@ export async function importSearchProfiles(profilesData, options = {}) {
     }
 
     return results;
-
   } catch (error) {
     console.error('Error importing search profiles:', error);
     return {
@@ -515,7 +507,6 @@ export async function exportSearchProfiles(options = {}) {
       data: exportData,
       count: profiles.length
     };
-
   } catch (error) {
     console.error('Error exporting search profiles:', error);
     return {
@@ -566,9 +557,7 @@ export async function getSearchProfileStats() {
     });
 
     // Sort and limit arrays
-    stats.recentlyUsed = stats.recentlyUsed
-      .sort((a, b) => b.lastUsed - a.lastUsed)
-      .slice(0, 10);
+    stats.recentlyUsed = stats.recentlyUsed.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, 10);
 
     stats.mostUsed = profiles
       .filter(p => p.metadata.usageCount > 0)
@@ -583,12 +572,12 @@ export async function getSearchProfileStats() {
     // Average success rate
     const profilesWithSuccess = profiles.filter(p => p.metadata.usageCount > 0);
     if (profilesWithSuccess.length > 0) {
-      stats.averageSuccessRate = profilesWithSuccess
-        .reduce((sum, p) => sum + (p.metadata.successRate || 0), 0) / profilesWithSuccess.length;
+      stats.averageSuccessRate =
+        profilesWithSuccess.reduce((sum, p) => sum + (p.metadata.successRate || 0), 0) /
+        profilesWithSuccess.length;
     }
 
     return stats;
-
   } catch (error) {
     console.error('Error getting search profile stats:', error);
     return null;
@@ -616,12 +605,11 @@ export async function optimizeSearchProfiles(options = {}) {
     // Remove unused profiles
     if (options.removeUnused) {
       const unusedThreshold = options.unusedDays || 90;
-      const cutoffDate = Date.now() - (unusedThreshold * 24 * 60 * 60 * 1000);
+      const cutoffDate = Date.now() - unusedThreshold * 24 * 60 * 60 * 1000;
 
       const beforeCount = optimizedProfiles.length;
       optimizedProfiles = optimizedProfiles.filter(profile => {
-        const isUnused = !profile.metadata.lastUsed ||
-                        profile.metadata.lastUsed < cutoffDate;
+        const isUnused = !profile.metadata.lastUsed || profile.metadata.lastUsed < cutoffDate;
         const hasLowUsage = (profile.metadata.usageCount || 0) === 0;
 
         return !(isUnused && hasLowUsage);
@@ -636,7 +624,10 @@ export async function optimizeSearchProfiles(options = {}) {
     // Remove similar profiles
     if (options.removeSimilar) {
       const beforeCount = optimizedProfiles.length;
-      optimizedProfiles = removeSimilarProfiles(optimizedProfiles, options.similarityThreshold || 0.8);
+      optimizedProfiles = removeSimilarProfiles(
+        optimizedProfiles,
+        options.similarityThreshold || 0.8
+      );
 
       results.duplicatesRemoved = beforeCount - optimizedProfiles.length;
       if (results.duplicatesRemoved > 0) {
@@ -651,7 +642,6 @@ export async function optimizeSearchProfiles(options = {}) {
     }
 
     return results;
-
   } catch (error) {
     console.error('Error optimizing search profiles:', error);
     return {
@@ -700,8 +690,8 @@ function validateSearchProfile(profile) {
   }
 
   // Check if at least one search criteria is provided
-  const criteriaValues = Object.values(profile.criteria).filter(value =>
-    typeof value === 'string' && value.trim().length > 0
+  const criteriaValues = Object.values(profile.criteria).filter(
+    value => typeof value === 'string' && value.trim().length > 0
   );
 
   if (criteriaValues.length === 0) {
@@ -761,7 +751,8 @@ function removeSimilarProfiles(profiles, threshold) {
 
       if (similarity >= threshold) {
         // Keep the one with higher usage
-        const keepFirst = (profiles[i].metadata.usageCount || 0) >= (profiles[j].metadata.usageCount || 0);
+        const keepFirst =
+          (profiles[i].metadata.usageCount || 0) >= (profiles[j].metadata.usageCount || 0);
         toRemove.push(keepFirst ? j : i);
       }
     }
@@ -778,7 +769,9 @@ function calculateProfileSimilarity(profile1, profile2) {
   const criteria1 = JSON.stringify(profile1.criteria);
   const criteria2 = JSON.stringify(profile2.criteria);
 
-  if (criteria1 === criteria2) return 1.0;
+  if (criteria1 === criteria2) {
+    return 1.0;
+  }
 
   // Calculate Jaccard similarity of criteria values
   const values1 = new Set(Object.values(profile1.criteria).filter(v => v && v.trim()));

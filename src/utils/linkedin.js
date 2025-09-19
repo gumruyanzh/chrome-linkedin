@@ -115,10 +115,11 @@ export function getProfilePageInfo() {
     const messageButton = document.querySelector('[aria-label*="Message"]');
 
     // Can connect only if connect button exists and it's not pending or already connected
-    const canConnect = !!connectButton &&
-                      !pendingButton &&
-                      connectButton.textContent?.trim() !== 'Pending' &&
-                      !messageButton;
+    const canConnect =
+      !!connectButton &&
+      !pendingButton &&
+      connectButton.textContent?.trim() !== 'Pending' &&
+      !messageButton;
 
     return {
       name: nameElement?.textContent?.trim() || null,

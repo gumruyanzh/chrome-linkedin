@@ -151,16 +151,20 @@ describe('LinkedIn Core Integration - Task 2.1', () => {
 
       global.document = {
         querySelector: jest.fn(selector => {
-          if (selector.includes('Connect')) return connectButton;
+          if (selector.includes('Connect')) {
+            return connectButton;
+          }
           return null;
         })
       };
 
-      return import('../utils/linkedin-automation.js').then(({ findConnectButton, isConnectButtonClickable }) => {
-        const button = findConnectButton();
-        expect(button).toBeTruthy();
-        expect(isConnectButtonClickable(button)).toBe(true);
-      });
+      return import('../utils/linkedin-automation.js').then(
+        ({ findConnectButton, isConnectButtonClickable }) => {
+          const button = findConnectButton();
+          expect(button).toBeTruthy();
+          expect(isConnectButtonClickable(button)).toBe(true);
+        }
+      );
     });
 
     test('should reject non-clickable buttons', () => {
@@ -195,13 +199,15 @@ describe('LinkedIn Core Integration - Task 2.1', () => {
         })
       };
 
-      return import('../utils/linkedin-automation.js').then(({ extractProfileFromSearchResult }) => {
-        const result = extractProfileFromSearchResult(mockResult);
-        expect(result.name).toBe('Alice Smith');
-        expect(result.title).toBe('Frontend Developer');
-        expect(result.location).toBe('New York, NY');
-        expect(result.profileUrl).toBe('/in/alicesmith/');
-      });
+      return import('../utils/linkedin-automation.js').then(
+        ({ extractProfileFromSearchResult }) => {
+          const result = extractProfileFromSearchResult(mockResult);
+          expect(result.name).toBe('Alice Smith');
+          expect(result.title).toBe('Frontend Developer');
+          expect(result.location).toBe('New York, NY');
+          expect(result.profileUrl).toBe('/in/alicesmith/');
+        }
+      );
     });
   });
 
@@ -263,16 +269,18 @@ describe('LinkedIn Core Integration - Task 2.1', () => {
         })
       };
 
-      return import('../utils/linkedin.js').then(({ getCurrentUserProfile, getProfilePageInfo }) => {
-        expect(() => getCurrentUserProfile()).not.toThrow();
-        expect(() => getProfilePageInfo()).not.toThrow();
+      return import('../utils/linkedin.js').then(
+        ({ getCurrentUserProfile, getProfilePageInfo }) => {
+          expect(() => getCurrentUserProfile()).not.toThrow();
+          expect(() => getProfilePageInfo()).not.toThrow();
 
-        const profile = getCurrentUserProfile();
-        expect(profile.isLoggedIn).toBe(false);
+          const profile = getCurrentUserProfile();
+          expect(profile.isLoggedIn).toBe(false);
 
-        const profileInfo = getProfilePageInfo();
-        expect(profileInfo).toBe(null);
-      });
+          const profileInfo = getProfilePageInfo();
+          expect(profileInfo).toBe(null);
+        }
+      );
     });
   });
 

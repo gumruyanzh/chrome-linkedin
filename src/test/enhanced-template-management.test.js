@@ -129,12 +129,14 @@ describe('Enhanced Template Management - Task 3.2', () => {
 
       getStorageData.mockResolvedValue({
         template_library: {
-          templates: [{
-            id: templateId,
-            name: 'Original Name',
-            version: 1,
-            updatedAt: 1000
-          }]
+          templates: [
+            {
+              id: templateId,
+              name: 'Original Name',
+              version: 1,
+              updatedAt: 1000
+            }
+          ]
         }
       });
 
@@ -176,12 +178,14 @@ describe('Enhanced Template Management - Task 3.2', () => {
 
       getStorageData.mockResolvedValue({
         template_library: {
-          templates: [{
-            id: templateId,
-            name: 'High Usage Template',
-            usageCount: 100,
-            performanceMetrics: { responseRate: 0.3 }
-          }]
+          templates: [
+            {
+              id: templateId,
+              name: 'High Usage Template',
+              usageCount: 100,
+              performanceMetrics: { responseRate: 0.3 }
+            }
+          ]
         }
       });
 
@@ -456,9 +460,21 @@ describe('Enhanced Template Management - Task 3.2', () => {
 
     test('should identify top performing templates', async () => {
       const mockTemplates = [
-        { id: '1', name: 'Low Performer', performanceMetrics: { responseRate: 0.1, acceptanceRate: 0.05 } },
-        { id: '2', name: 'High Performer', performanceMetrics: { responseRate: 0.4, acceptanceRate: 0.3 } },
-        { id: '3', name: 'Medium Performer', performanceMetrics: { responseRate: 0.2, acceptanceRate: 0.15 } }
+        {
+          id: '1',
+          name: 'Low Performer',
+          performanceMetrics: { responseRate: 0.1, acceptanceRate: 0.05 }
+        },
+        {
+          id: '2',
+          name: 'High Performer',
+          performanceMetrics: { responseRate: 0.4, acceptanceRate: 0.3 }
+        },
+        {
+          id: '3',
+          name: 'Medium Performer',
+          performanceMetrics: { responseRate: 0.2, acceptanceRate: 0.15 }
+        }
       ];
 
       getStorageData.mockResolvedValue({
@@ -564,9 +580,7 @@ describe('Enhanced Template Management - Task 3.2', () => {
       expect(result.version).toBe(2);
 
       // Check that version history was stored
-      const versionCall = setStorageData.mock.calls.find(call =>
-        call[0].template_versions
-      );
+      const versionCall = setStorageData.mock.calls.find(call => call[0].template_versions);
       expect(versionCall).toBeDefined();
     });
 

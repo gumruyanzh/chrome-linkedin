@@ -123,7 +123,6 @@ export class ResponseTrackingSystem {
       });
 
       return conversationId;
-
     } catch (error) {
       console.error('Error tracking sent message:', error);
       throw new Error(`Failed to track sent message: ${error.message}`);
@@ -173,8 +172,10 @@ export class ResponseTrackingSystem {
       this.markMessagesAsResponded(conversation, response.timestamp);
 
       // Cancel pending follow-ups if response is positive
-      if (response.responseType === RESPONSE_TYPES.POSITIVE ||
-          response.responseType === RESPONSE_TYPES.INTERESTED) {
+      if (
+        response.responseType === RESPONSE_TYPES.POSITIVE ||
+        response.responseType === RESPONSE_TYPES.INTERESTED
+      ) {
         await this.cancelPendingFollowups(conversationId);
       }
 
@@ -200,7 +201,6 @@ export class ResponseTrackingSystem {
         followupSuggestions,
         responseTime: this.calculateResponseTime(conversation, response)
       };
-
     } catch (error) {
       console.error('Error detecting response:', error);
       throw new Error(`Failed to detect response: ${error.message}`);
@@ -235,7 +235,6 @@ export class ResponseTrackingSystem {
       await this.saveFollowupSequences();
 
       return sequence;
-
     } catch (error) {
       console.error('Error creating follow-up sequence:', error);
       throw new Error(`Failed to create follow-up sequence: ${error.message}`);
@@ -286,7 +285,6 @@ export class ResponseTrackingSystem {
       });
 
       return followup;
-
     } catch (error) {
       console.error('Error scheduling follow-up:', error);
       throw new Error(`Failed to schedule follow-up: ${error.message}`);
@@ -315,7 +313,7 @@ export class ResponseTrackingSystem {
       }
 
       // Check if conditions are still met
-      if (!await this.checkFollowupConditions(followup, conversation)) {
+      if (!(await this.checkFollowupConditions(followup, conversation))) {
         followup.status = FOLLOWUP_STATUS.CANCELLED;
         await this.saveConversations();
         return { status: 'cancelled', reason: 'conditions_not_met' };
@@ -360,7 +358,6 @@ export class ResponseTrackingSystem {
         await this.saveConversations();
         return { status: 'failed', error: sendResult.error };
       }
-
     } catch (error) {
       console.error('Error executing follow-up:', error);
       throw new Error(`Failed to execute follow-up: ${error.message}`);
@@ -400,7 +397,8 @@ export class ResponseTrackingSystem {
           indicators: this.getEngagementIndicators(conversation)
         },
         followups: {
-          scheduled: conversation.followups.filter(f => f.status === FOLLOWUP_STATUS.SCHEDULED).length,
+          scheduled: conversation.followups.filter(f => f.status === FOLLOWUP_STATUS.SCHEDULED)
+            .length,
           sent: conversation.followups.filter(f => f.status === FOLLOWUP_STATUS.SENT).length,
           responded: conversation.followups.filter(f => f.responseReceived).length
         },
@@ -408,7 +406,6 @@ export class ResponseTrackingSystem {
       };
 
       return analysis;
-
     } catch (error) {
       console.error('Error analyzing conversation:', error);
       throw new Error(`Failed to analyze conversation: ${error.message}`);
@@ -434,9 +431,7 @@ export class ResponseTrackingSystem {
       }
 
       if (options.hasResponse) {
-        conversations = conversations.filter(c =>
-          c.messages.some(m => m.type === 'received')
-        );
+        conversations = conversations.filter(c => c.messages.some(m => m.type === 'received'));
       }
 
       if (options.responseType) {
@@ -446,15 +441,11 @@ export class ResponseTrackingSystem {
       }
 
       if (options.lastActivityAfter) {
-        conversations = conversations.filter(c =>
-          c.lastActivity >= options.lastActivityAfter
-        );
+        conversations = conversations.filter(c => c.lastActivity >= options.lastActivityAfter);
       }
 
       if (options.tags && options.tags.length > 0) {
-        conversations = conversations.filter(c =>
-          options.tags.some(tag => c.tags.includes(tag))
-        );
+        conversations = conversations.filter(c => options.tags.some(tag => c.tags.includes(tag)));
       }
 
       // Sort conversations
@@ -494,7 +485,6 @@ export class ResponseTrackingSystem {
           averageResponseRate: this.calculateOverallResponseRate()
         }
       };
-
     } catch (error) {
       console.error('Error getting conversations:', error);
       return {
@@ -533,28 +523,47 @@ export class ResponseTrackingSystem {
     // Simple classification logic
     const lowerContent = content.toLowerCase();
 
-    if (lowerContent.includes('yes') || lowerContent.includes('interested') ||
-        lowerContent.includes('sounds good') || lowerContent.includes('let\'s')) {
+    if (
+      lowerContent.includes('yes') ||
+      lowerContent.includes('interested') ||
+      lowerContent.includes('sounds good') ||
+      lowerContent.includes("let's")
+    ) {
       return RESPONSE_TYPES.INTERESTED;
     }
 
-    if (lowerContent.includes('no') || lowerContent.includes('not interested') ||
-        lowerContent.includes('decline') || lowerContent.includes('pass')) {
+    if (
+      lowerContent.includes('no') ||
+      lowerContent.includes('not interested') ||
+      lowerContent.includes('decline') ||
+      lowerContent.includes('pass')
+    ) {
       return RESPONSE_TYPES.NOT_INTERESTED;
     }
 
-    if (lowerContent.includes('?') || lowerContent.includes('what') ||
-        lowerContent.includes('how') || lowerContent.includes('when')) {
+    if (
+      lowerContent.includes('?') ||
+      lowerContent.includes('what') ||
+      lowerContent.includes('how') ||
+      lowerContent.includes('when')
+    ) {
       return RESPONSE_TYPES.QUESTION;
     }
 
-    if (lowerContent.includes('meeting') || lowerContent.includes('call') ||
-        lowerContent.includes('schedule') || lowerContent.includes('available')) {
+    if (
+      lowerContent.includes('meeting') ||
+      lowerContent.includes('call') ||
+      lowerContent.includes('schedule') ||
+      lowerContent.includes('available')
+    ) {
       return RESPONSE_TYPES.MEETING_REQUEST;
     }
 
-    if (lowerContent.includes('out of office') || lowerContent.includes('vacation') ||
-        lowerContent.includes('away')) {
+    if (
+      lowerContent.includes('out of office') ||
+      lowerContent.includes('vacation') ||
+      lowerContent.includes('away')
+    ) {
       return RESPONSE_TYPES.OUT_OF_OFFICE;
     }
 
@@ -563,12 +572,33 @@ export class ResponseTrackingSystem {
 
   extractKeywords(content) {
     // Simple keyword extraction
-    const words = content.toLowerCase()
+    const words = content
+      .toLowerCase()
       .replace(/[^\w\s]/g, '')
       .split(/\s+/)
       .filter(word => word.length > 3);
 
-    const commonWords = ['that', 'this', 'with', 'from', 'they', 'been', 'have', 'were', 'said', 'each', 'which', 'their', 'time', 'will', 'about', 'would', 'there', 'could', 'other'];
+    const commonWords = [
+      'that',
+      'this',
+      'with',
+      'from',
+      'they',
+      'been',
+      'have',
+      'were',
+      'said',
+      'each',
+      'which',
+      'their',
+      'time',
+      'will',
+      'about',
+      'would',
+      'there',
+      'could',
+      'other'
+    ];
 
     return words.filter(word => !commonWords.includes(word)).slice(0, 10);
   }
@@ -578,7 +608,9 @@ export class ResponseTrackingSystem {
       .filter(m => m.type === 'sent' && m.timestamp < response.timestamp)
       .sort((a, b) => b.timestamp - a.timestamp);
 
-    if (sentMessages.length === 0) return 0;
+    if (sentMessages.length === 0) {
+      return 0;
+    }
 
     return response.timestamp - sentMessages[0].timestamp;
   }
@@ -600,7 +632,8 @@ export class ResponseTrackingSystem {
     });
 
     if (responseTimes.length > 0) {
-      conversation.averageResponseTime = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+      conversation.averageResponseTime =
+        responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
     }
 
     const totalResponses = conversation.messages.filter(m => m.type === 'received').length;
@@ -632,13 +665,16 @@ export class ResponseTrackingSystem {
 
   async scheduleResponseCheck(conversationId, messageId) {
     // Schedule automatic response detection after 1 hour
-    setTimeout(async () => {
-      try {
-        await this.checkForResponse(conversationId, messageId);
-      } catch (error) {
-        console.error('Error in scheduled response check:', error);
-      }
-    }, 60 * 60 * 1000); // 1 hour
+    setTimeout(
+      async () => {
+        try {
+          await this.checkForResponse(conversationId, messageId);
+        } catch (error) {
+          console.error('Error in scheduled response check:', error);
+        }
+      },
+      60 * 60 * 1000
+    ); // 1 hour
   }
 
   async checkForResponse(conversationId, messageId) {
@@ -710,13 +746,14 @@ export class ResponseTrackingSystem {
 
   async checkFollowupConditions(followup, conversation) {
     // Check if conversation still warrants follow-up
-    const hasRecentResponse = conversation.messages.some(m =>
-      m.type === 'received' &&
-      m.timestamp > followup.createdAt
+    const hasRecentResponse = conversation.messages.some(
+      m => m.type === 'received' && m.timestamp > followup.createdAt
     );
 
     // Don't send follow-up if we received a response
-    if (hasRecentResponse) return false;
+    if (hasRecentResponse) {
+      return false;
+    }
 
     // Check other conditions
     if (followup.metadata.conditions) {
@@ -739,13 +776,19 @@ export class ResponseTrackingSystem {
   }
 
   async scheduleNextInSequence(followup, conversation) {
-    if (!followup.sequenceId) return;
+    if (!followup.sequenceId) {
+      return;
+    }
 
     const sequence = this.followupSequences.get(followup.sequenceId);
-    if (!sequence) return;
+    if (!sequence) {
+      return;
+    }
 
     const nextStep = sequence.steps.find(step => step.stepNumber === followup.stepNumber + 1);
-    if (!nextStep) return;
+    if (!nextStep) {
+      return;
+    }
 
     await this.scheduleFollowup({
       conversationId: conversation.id,
@@ -760,7 +803,9 @@ export class ResponseTrackingSystem {
 
   async cancelPendingFollowups(conversationId) {
     const conversation = this.conversations.get(conversationId);
-    if (!conversation) return;
+    if (!conversation) {
+      return;
+    }
 
     conversation.followups.forEach(followup => {
       if (followup.status === FOLLOWUP_STATUS.SCHEDULED) {
@@ -780,7 +825,9 @@ export class ResponseTrackingSystem {
 
   calculateOverallResponseRate() {
     const conversations = Array.from(this.conversations.values());
-    if (conversations.length === 0) return 0;
+    if (conversations.length === 0) {
+      return 0;
+    }
 
     const totalResponseRate = conversations.reduce((sum, conv) => sum + conv.responseRate, 0);
     return totalResponseRate / conversations.length;
@@ -842,9 +889,12 @@ export class ResponseTrackingSystem {
 
   startResponseDetector() {
     // Start periodic checking for new responses
-    setInterval(() => {
-      this.scanForNewResponses();
-    }, 5 * 60 * 1000); // Check every 5 minutes
+    setInterval(
+      () => {
+        this.scanForNewResponses();
+      },
+      5 * 60 * 1000
+    ); // Check every 5 minutes
   }
 
   async scanForNewResponses() {
@@ -859,8 +909,36 @@ export class ResponseTrackingSystem {
  */
 class SentimentAnalyzer {
   constructor() {
-    this.positiveWords = ['great', 'excellent', 'awesome', 'love', 'amazing', 'perfect', 'wonderful', 'fantastic', 'yes', 'absolutely', 'definitely', 'interested', 'excited'];
-    this.negativeWords = ['terrible', 'awful', 'hate', 'horrible', 'worst', 'bad', 'no', 'never', 'decline', 'reject', 'uninterested', 'busy', 'not interested'];
+    this.positiveWords = [
+      'great',
+      'excellent',
+      'awesome',
+      'love',
+      'amazing',
+      'perfect',
+      'wonderful',
+      'fantastic',
+      'yes',
+      'absolutely',
+      'definitely',
+      'interested',
+      'excited'
+    ];
+    this.negativeWords = [
+      'terrible',
+      'awful',
+      'hate',
+      'horrible',
+      'worst',
+      'bad',
+      'no',
+      'never',
+      'decline',
+      'reject',
+      'uninterested',
+      'busy',
+      'not interested'
+    ];
   }
 
   async analyze(text) {
@@ -878,8 +956,12 @@ class SentimentAnalyzer {
       }
     });
 
-    if (positiveScore > negativeScore) return 'positive';
-    if (negativeScore > positiveScore) return 'negative';
+    if (positiveScore > negativeScore) {
+      return 'positive';
+    }
+    if (negativeScore > positiveScore) {
+      return 'negative';
+    }
     return 'neutral';
   }
 }

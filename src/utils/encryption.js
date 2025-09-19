@@ -10,13 +10,10 @@ function generateIV() {
 }
 
 async function importKey(keyData) {
-  return await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'AES-CBC' },
-    false,
-    ['encrypt', 'decrypt']
-  );
+  return await crypto.subtle.importKey('raw', keyData, { name: 'AES-CBC' }, false, [
+    'encrypt',
+    'decrypt'
+  ]);
 }
 
 export async function encryptData(plaintext) {
@@ -32,11 +29,7 @@ export async function encryptData(plaintext) {
 
   const cryptoKey = await importKey(key);
 
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-CBC', iv: iv },
-    cryptoKey,
-    data
-  );
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv: iv }, cryptoKey, data);
 
   const encryptedArray = new Uint8Array(encrypted);
   const result = new Uint8Array(key.length + iv.length + encryptedArray.length);
@@ -55,7 +48,9 @@ export async function decryptData(encryptedData) {
 
   try {
     const data = new Uint8Array(
-      atob(encryptedData).split('').map(char => char.charCodeAt(0))
+      atob(encryptedData)
+        .split('')
+        .map(char => char.charCodeAt(0))
     );
 
     const key = data.slice(0, ENCRYPTION_KEY_LENGTH);

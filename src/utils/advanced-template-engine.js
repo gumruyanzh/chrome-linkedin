@@ -23,7 +23,9 @@ const VARIABLE_PATTERNS = {
  */
 const TEMPLATE_HELPERS = {
   formatDate: (date, format) => {
-    if (!date) return '';
+    if (!date) {
+      return '';
+    }
     const d = new Date(date);
     if (format === 'MMM YYYY') {
       return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
@@ -45,17 +47,18 @@ const TEMPLATE_HELPERS = {
 
   and: (...args) => args.every(Boolean),
   or: (...args) => args.some(Boolean),
-  not: (value) => !value,
+  not: value => !value,
 
-  capitalize: (str) => str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '',
-  uppercase: (str) => str ? str.toUpperCase() : '',
-  lowercase: (str) => str ? str.toLowerCase() : '',
+  capitalize: str => (str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''),
+  uppercase: str => (str ? str.toUpperCase() : ''),
+  lowercase: str => (str ? str.toLowerCase() : ''),
 
-  truncate: (str, length = 50) => str && str.length > length ? str.substring(0, length) + '...' : str,
+  truncate: (str, length = 50) =>
+    str && str.length > length ? str.substring(0, length) + '...' : str,
 
   pluralize: (count, singular, plural) => {
     const num = Number(count);
-    return num === 1 ? singular : (plural || singular + 's');
+    return num === 1 ? singular : plural || singular + 's';
   }
 };
 
@@ -135,7 +138,6 @@ export async function processAdvancedTemplate(template, profileData, options = {
     }
 
     return result;
-
   } catch (error) {
     console.error('Error processing advanced template:', error);
     return 'Error: template processing failed';
@@ -174,19 +176,26 @@ async function processTemplateString(template, data) {
  */
 async function processConditionals(template, data) {
   // Process if-else-if chains
-  template = template.replace(VARIABLE_PATTERNS.CONDITIONAL_ELSE, (match, condition1, content1, condition2, content2) => {
-    const result1 = evaluateCondition(condition1.trim(), data);
-    if (result1) return content1.trim();
+  template = template.replace(
+    VARIABLE_PATTERNS.CONDITIONAL_ELSE,
+    (match, condition1, content1, condition2, content2) => {
+      const result1 = evaluateCondition(condition1.trim(), data);
+      if (result1) {
+        return content1.trim();
+      }
 
-    if (condition2) {
-      const result2 = evaluateCondition(condition2.trim(), data);
-      if (result2) return content2.trim();
-    } else {
-      return content2.trim(); // else block
+      if (condition2) {
+        const result2 = evaluateCondition(condition2.trim(), data);
+        if (result2) {
+          return content2.trim();
+        }
+      } else {
+        return content2.trim(); // else block
+      }
+
+      return '';
     }
-
-    return '';
-  });
+  );
 
   // Process simple conditionals
   template = template.replace(VARIABLE_PATTERNS.CONDITIONAL, (match, condition, content) => {
@@ -206,23 +215,30 @@ async function processConditionals(template, data) {
 async function processEachLoops(template, data) {
   return template.replace(VARIABLE_PATTERNS.EACH_LOOP, (match, arrayName, content) => {
     const array = getNestedValue(data, arrayName);
-    if (!Array.isArray(array)) return '';
+    if (!Array.isArray(array)) {
+      return '';
+    }
 
-    return array.map((item, index) => {
-      let itemContent = content;
+    return array
+      .map((item, index) => {
+        let itemContent = content;
 
-      // Replace item properties
-      itemContent = itemContent.replace(/\{\{(\w+)\}\}/g, (match, prop) => {
-        return item[prop] || '';
-      });
+        // Replace item properties
+        itemContent = itemContent.replace(/\{\{(\w+)\}\}/g, (match, prop) => {
+          return item[prop] || '';
+        });
 
-      // Handle @last helper
-      itemContent = itemContent.replace(/\{\{#unless @last\}\}(.*?)\{\{\/unless\}\}/gs, (match, innerContent) => {
-        return index === array.length - 1 ? '' : innerContent;
-      });
+        // Handle @last helper
+        itemContent = itemContent.replace(
+          /\{\{#unless @last\}\}(.*?)\{\{\/unless\}\}/gs,
+          (match, innerContent) => {
+            return index === array.length - 1 ? '' : innerContent;
+          }
+        );
 
-      return itemContent;
-    }).join('');
+        return itemContent;
+      })
+      .join('');
   });
 }
 
@@ -235,7 +251,9 @@ async function processEachLoops(template, data) {
 async function processHelperFunctions(template, data) {
   return template.replace(VARIABLE_PATTERNS.HELPER_FUNCTION, (match, helperName, args) => {
     const helper = TEMPLATE_HELPERS[helperName];
-    if (!helper) return match;
+    if (!helper) {
+      return match;
+    }
 
     // Parse arguments
     const argValues = args.split(/\s+/).map(arg => {
@@ -324,7 +342,6 @@ function evaluateCondition(condition, data) {
     // Use Function constructor for safer evaluation
     const func = new Function('TEMPLATE_HELPERS', `return ${conditionWithHelpers}`);
     return Boolean(func(TEMPLATE_HELPERS));
-
   } catch (error) {
     console.error('Error evaluating condition:', condition, error);
     return false;
@@ -338,7 +355,9 @@ function evaluateCondition(condition, data) {
  * @returns {*} Value at path or null
  */
 function getNestedValue(obj, path) {
-  if (!obj || !path) return null;
+  if (!obj || !path) {
+    return null;
+  }
 
   return path.split('.').reduce((current, key) => {
     return current && current[key] !== undefined ? current[key] : null;
@@ -365,7 +384,9 @@ function sanitizeProfileData(obj, depth = 0, maxDepth = 10) {
   const seen = new Set();
 
   for (const [key, value] of Object.entries(obj)) {
-    if (seen.has(value)) continue; // Skip circular references
+    if (seen.has(value)) {
+      continue;
+    } // Skip circular references
     seen.add(value);
     sanitized[key] = sanitizeProfileData(value, depth + 1, maxDepth);
   }
@@ -478,16 +499,16 @@ export async function calculatePersonalizationScore(template, profileData) {
 
     // Score based on variable availability and specificity
     const variableScores = {
-      'name': 0.1,
-      'firstName': 0.1,
-      'company': 0.15,
+      name: 0.1,
+      firstName: 0.1,
+      company: 0.15,
       'company.name': 0.15,
-      'title': 0.15,
-      'location': 0.1,
+      title: 0.15,
+      location: 0.1,
       'location.city': 0.1,
-      'mutualConnections': 0.2,
-      'industry': 0.1,
-      'skills': 0.1
+      mutualConnections: 0.2,
+      industry: 0.1,
+      skills: 0.1
     };
 
     variables.forEach(variable => {
@@ -511,7 +532,6 @@ export async function calculatePersonalizationScore(template, profileData) {
     }
 
     return Math.min(score, 1.0);
-
   } catch (error) {
     console.error('Error calculating personalization score:', error);
     return 0;
@@ -650,7 +670,6 @@ export async function validateAdvancedVariables(template, profileData = null) {
     }
 
     return result;
-
   } catch (error) {
     console.error('Error validating template variables:', error);
     result.isValid = false;
@@ -742,7 +761,9 @@ function calculateStringSimilarity(str1, str2) {
   const longer = str1.length > str2.length ? str1 : str2;
   const shorter = str1.length > str2.length ? str2 : str1;
 
-  if (longer.length === 0) return 1.0;
+  if (longer.length === 0) {
+    return 1.0;
+  }
 
   const editDistance = calculateLevenshteinDistance(longer, shorter);
   return (longer.length - editDistance) / longer.length;
@@ -794,7 +815,9 @@ function extractCurrentTitle(profile) {
 function extractCurrentCompany(profile) {
   if (profile.headline) {
     const companyMatch = profile.headline.match(/at\s+(.+)$/);
-    if (companyMatch) return companyMatch[1].trim();
+    if (companyMatch) {
+      return companyMatch[1].trim();
+    }
   }
 
   if (profile.experience && profile.experience.length > 0) {
@@ -809,11 +832,11 @@ function inferIndustry(profile) {
   const company = extractCurrentCompany(profile).toLowerCase();
 
   const industryKeywords = {
-    'Technology': ['software', 'engineer', 'developer', 'tech', 'programming', 'data', 'ai', 'ml'],
-    'Finance': ['finance', 'banking', 'investment', 'financial', 'analyst', 'trader'],
-    'Healthcare': ['healthcare', 'medical', 'doctor', 'nurse', 'pharmaceutical', 'biotech'],
-    'Marketing': ['marketing', 'advertising', 'brand', 'digital marketing', 'seo', 'social media'],
-    'Sales': ['sales', 'business development', 'account', 'revenue', 'growth']
+    Technology: ['software', 'engineer', 'developer', 'tech', 'programming', 'data', 'ai', 'ml'],
+    Finance: ['finance', 'banking', 'investment', 'financial', 'analyst', 'trader'],
+    Healthcare: ['healthcare', 'medical', 'doctor', 'nurse', 'pharmaceutical', 'biotech'],
+    Marketing: ['marketing', 'advertising', 'brand', 'digital marketing', 'seo', 'social media'],
+    Sales: ['sales', 'business development', 'account', 'revenue', 'growth']
   };
 
   for (const [industry, keywords] of Object.entries(industryKeywords)) {
@@ -826,7 +849,9 @@ function inferIndustry(profile) {
 }
 
 function calculateExperienceYears(experience) {
-  if (!experience || experience.length === 0) return 0;
+  if (!experience || experience.length === 0) {
+    return 0;
+  }
 
   let totalYears = 0;
   experience.forEach(exp => {
@@ -842,7 +867,9 @@ function calculateExperienceYears(experience) {
 }
 
 function parseConnectionCount(connections) {
-  if (!connections) return 0;
+  if (!connections) {
+    return 0;
+  }
 
   if (connections.includes('+')) {
     return parseInt(connections) || 500;
@@ -855,9 +882,15 @@ function calculateNetworkStrength(profile) {
   const connectionCount = parseConnectionCount(profile.connections);
   const mutualCount = profile.mutualConnections || 0;
 
-  if (mutualCount > 10) return 'Strong';
-  if (mutualCount > 3) return 'Medium';
-  if (connectionCount > 100) return 'Medium';
+  if (mutualCount > 10) {
+    return 'Strong';
+  }
+  if (mutualCount > 3) {
+    return 'Medium';
+  }
+  if (connectionCount > 100) {
+    return 'Medium';
+  }
   return 'Weak';
 }
 
@@ -885,9 +918,13 @@ function calculateConnectionLikelihood(profile) {
 
   // Mutual connections boost
   const mutualCount = profile.mutualConnections || 0;
-  if (mutualCount > 10) score += 0.3;
-  else if (mutualCount > 3) score += 0.2;
-  else if (mutualCount > 0) score += 0.1;
+  if (mutualCount > 10) {
+    score += 0.3;
+  } else if (mutualCount > 3) {
+    score += 0.2;
+  } else if (mutualCount > 0) {
+    score += 0.1;
+  }
 
   // Industry alignment
   if (profile.industry && profile.industry !== 'Other') {
@@ -895,9 +932,15 @@ function calculateConnectionLikelihood(profile) {
   }
 
   // Profile completeness
-  if (profile.headline) score += 0.05;
-  if (profile.experience && profile.experience.length > 0) score += 0.05;
-  if (profile.education && profile.education.length > 0) score += 0.05;
+  if (profile.headline) {
+    score += 0.05;
+  }
+  if (profile.experience && profile.experience.length > 0) {
+    score += 0.05;
+  }
+  if (profile.education && profile.education.length > 0) {
+    score += 0.05;
+  }
 
   return Math.min(score, 1.0);
 }
@@ -905,8 +948,12 @@ function calculateConnectionLikelihood(profile) {
 function identifyPersonalizationFactors(profile) {
   const factors = [];
 
-  if (profile.mutualConnections > 10) factors.push('high_mutual_connections');
-  if (profile.mutualConnections > 3) factors.push('mutual_connections');
+  if (profile.mutualConnections > 10) {
+    factors.push('high_mutual_connections');
+  }
+  if (profile.mutualConnections > 3) {
+    factors.push('mutual_connections');
+  }
 
   const company = extractCurrentCompany(profile).toLowerCase();
   const prestigiousCompanies = ['google', 'microsoft', 'apple', 'amazon', 'facebook', 'netflix'];
@@ -923,8 +970,12 @@ function identifyPersonalizationFactors(profile) {
   }
 
   const seniority = inferSeniority(profile);
-  if (seniority === 'Executive') factors.push('executive_level');
-  if (seniority === 'Senior') factors.push('senior_level');
+  if (seniority === 'Executive') {
+    factors.push('executive_level');
+  }
+  if (seniority === 'Senior') {
+    factors.push('senior_level');
+  }
 
   return factors;
 }
@@ -934,7 +985,7 @@ function hashProfileData(profileData) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash);

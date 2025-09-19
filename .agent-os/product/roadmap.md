@@ -99,6 +99,5 @@
 - Integration with popular CRM systems (HubSpot, Salesforce)
 - Mobile companion app
 - LinkedIn Sales Navigator enhanced integration
-- Multi-language support
 - Enterprise features and pricing tiers
 - AI-powered message optimization

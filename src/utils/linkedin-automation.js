@@ -12,7 +12,9 @@ export async function sendConnectionRequest(customMessage = null) {
     if (!connectButton || !isConnectButtonClickable(connectButton)) {
       return {
         success: false,
-        error: connectButton ? 'Cannot connect - already connected or pending' : 'Connect button not found',
+        error: connectButton
+          ? 'Cannot connect - already connected or pending'
+          : 'Connect button not found',
         reason: connectButton ? 'ALREADY_CONNECTED' : 'NO_CONNECT_BUTTON'
       };
     }
@@ -44,7 +46,6 @@ export async function sendConnectionRequest(customMessage = null) {
       hasCustomMessage: !!customMessage,
       profileUrl: window.location.href
     };
-
   } catch (error) {
     console.error('Error sending connection request:', error);
     return {
@@ -61,17 +62,43 @@ export async function sendConnectionRequest(customMessage = null) {
  */
 export function findConnectButton() {
   const selectors = [
-    '[aria-label*="Connect"]',
+    // Current LinkedIn connect button selectors (2024)
+    'button[aria-label*="Invite"][aria-label*="connect"]',
+    'button[aria-label*="Connect"]',
     'button[data-control-name="connect"]',
-    '.pv-s-profile-actions button:has-text("Connect")',
-    '.artdeco-button--primary:has-text("Connect")'
+    'button[data-control-name="invite"]',
+    '.artdeco-button--2[aria-label*="connect"]',
+    '.search-result__actions button[aria-label*="connect"]',
+    '.entity-result__actions button[aria-label*="connect"]',
+    '[data-test-person-result-page-connect-button]',
+    // Legacy selectors for older LinkedIn versions
+    '.pv-s-profile-actions button',
+    '.artdeco-button--primary',
+    '.pv-s-profile-actions .artdeco-button',
+    'button[data-control-name="people_connect"]'
   ];
 
   for (const selector of selectors) {
     try {
-      const button = document.querySelector(selector);
-      if (button && button.textContent.includes('Connect')) {
-        return button;
+      const buttons = document.querySelectorAll(selector);
+      for (const button of buttons) {
+        const buttonText = button.textContent?.toLowerCase() || '';
+        const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+
+        if (
+          buttonText.includes('connect') &&
+          !buttonText.includes('connected') &&
+          !buttonText.includes('pending')
+        ) {
+          return button;
+        }
+        if (
+          ariaLabel.includes('connect') &&
+          !ariaLabel.includes('connected') &&
+          !ariaLabel.includes('pending')
+        ) {
+          return button;
+        }
       }
     } catch (error) {
       continue;
@@ -87,7 +114,10 @@ export function findConnectButton() {
  * @returns {boolean} True if clickable
  */
 export function isConnectButtonClickable(connectButton) {
-  if (!connectButton) return false;
+  if (!connectButton) {
+    console.log('  isConnectButtonClickable: Button is null/undefined');
+    return false;
+  }
 
   try {
     const buttonText = connectButton.textContent?.trim().toLowerCase() || '';
@@ -98,20 +128,50 @@ export function isConnectButtonClickable(connectButton) {
       ariaLabel = connectButton.getAttribute('aria-label')?.toLowerCase() || '';
     }
 
+    console.log('  isConnectButtonClickable: Checking button -', { buttonText, ariaLabel });
+
+    // Check if button is disabled
+    if (connectButton.disabled) {
+      console.log('  isConnectButtonClickable: Button is disabled');
+      return false;
+    }
+
     // Check for states that prevent connecting
     const blockedStates = [
       'pending',
       'invitation sent',
       'invitation pending',
-      'message',
+      'connected',
       'following',
       'unfollow'
     ];
 
-    return !blockedStates.some(state =>
-      buttonText.includes(state) || ariaLabel.includes(state)
-    );
+    // Be more permissive - if the button contains "connect" text, allow it
+    const hasConnectText = buttonText.includes('connect') || ariaLabel.includes('connect');
+    const hasInviteText = buttonText.includes('invite') || ariaLabel.includes('invite');
+
+    if (hasConnectText || hasInviteText) {
+      // Check if any blocked states are present
+      const isBlocked = blockedStates.some(state =>
+        buttonText.includes(state) || ariaLabel.includes(state)
+      );
+
+      console.log('  isConnectButtonClickable: Has connect/invite text =', hasConnectText || hasInviteText);
+      console.log('  isConnectButtonClickable: Is blocked =', isBlocked);
+
+      return !isBlocked;
+    }
+
+    // Also allow buttons that just say "Connect" even without aria-label
+    if (buttonText === 'connect' || buttonText === 'invite') {
+      console.log('  isConnectButtonClickable: Simple connect/invite button found');
+      return true;
+    }
+
+    console.log('  isConnectButtonClickable: No connect/invite text found');
+    return false;
   } catch (error) {
+    console.log('  isConnectButtonClickable: Error checking button:', error);
     return false;
   }
 }
@@ -123,20 +183,54 @@ export function isConnectButtonClickable(connectButton) {
  */
 export async function handleConnectionMessage(message) {
   try {
-    // Wait for message dialog to appear
-    await waitForElement('[aria-label*="Add a note"]', 3000);
+    // Updated selectors for add note functionality
+    const addNoteSelectors = [
+      '[aria-label*="Add a note"]',
+      'button[aria-label*="note"]',
+      '.send-invite__custom-message button',
+      '.artdeco-modal [aria-label*="note"]'
+    ];
 
-    const addNoteButton = document.querySelector('[aria-label*="Add a note"]');
+    // Wait for message dialog to appear and try to find add note button
+    let addNoteButton = null;
+    for (const selector of addNoteSelectors) {
+      try {
+        addNoteButton = await waitForElement(selector, 3000);
+        if (addNoteButton) {
+          console.log(`Found add note button with selector: ${selector}`);
+          break;
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+
     if (addNoteButton) {
       addNoteButton.click();
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Find message textarea
-    const messageTextarea = await waitForElement(
-      'textarea[name="message"], textarea[aria-label*="message"]',
-      2000
-    );
+    // Find message textarea with updated selectors
+    const messageTextareaSelectors = [
+      'textarea[name="message"]',
+      'textarea[aria-label*="message"]',
+      '#custom-message',
+      '.send-invite__custom-message textarea',
+      '.artdeco-modal textarea'
+    ];
+
+    let messageTextarea = null;
+    for (const selector of messageTextareaSelectors) {
+      try {
+        messageTextarea = await waitForElement(selector, 2000);
+        if (messageTextarea) {
+          console.log(`Found message textarea with selector: ${selector}`);
+          break;
+        }
+      } catch (error) {
+        continue;
+      }
+    }
 
     if (messageTextarea) {
       messageTextarea.value = message;
@@ -158,18 +252,35 @@ export async function handleConnectionMessage(message) {
 export async function confirmConnectionRequest() {
   try {
     const sendSelectors = [
+      // Current LinkedIn send invitation selectors (2024)
       '[aria-label*="Send invitation"]',
+      '[aria-label*="Send now"]',
       'button[data-control-name="invite.send"]',
-      '.artdeco-button--primary:has-text("Send")',
-      'button:has-text("Send invitation")'
+      'button[data-control-name="send_invite"]',
+      '[data-test*="send-invite"]',
+      'button[type="submit"]',
+      '.send-invite__actions button[aria-label*="Send"]',
+      '.artdeco-modal__actionbar button[aria-label*="Send"]',
+      // Modal-specific selectors
+      '.artdeco-modal .artdeco-button--primary',
+      '.artdeco-button--primary'
     ];
 
     for (const selector of sendSelectors) {
       try {
         const sendButton = await waitForElement(selector, 2000);
         if (sendButton && !sendButton.disabled) {
-          sendButton.click();
-          return true;
+          // Verify it's actually a send button by checking text content
+          const buttonText = sendButton.textContent?.toLowerCase() || '';
+          const isValidSendButton =
+            buttonText.includes('send') ||
+            buttonText.includes('invitation') ||
+            sendButton.getAttribute('aria-label')?.toLowerCase().includes('send');
+
+          if (isValidSendButton) {
+            sendButton.click();
+            return true;
+          }
         }
       } catch (error) {
         continue;
@@ -224,23 +335,98 @@ export function waitForElement(selector, timeout = 5000) {
  */
 export function extractProfileFromSearchResult(element) {
   try {
-    const nameElement = element.querySelector('.entity-result__title-text a, .actor-name a');
-    const titleElement = element.querySelector('.entity-result__primary-subtitle, .subline-level-1');
-    const locationElement = element.querySelector('.entity-result__secondary-subtitle, .subline-level-2');
-    const connectButton = element.querySelector('button[aria-label*="Connect"]');
+    // Updated selectors for current LinkedIn structure
+    const nameSelectors = [
+      '.entity-result__title-text a',
+      '.app-aware-link .entity-result__title-text',
+      '.search-result__info .actor-name a',
+      '.artdeco-entity-lockup__title a',
+      '.reusable-search__result-container .entity-result__title-text a',
+      '[data-control-name="search_srp_result"] a[href*="/in/"]',
+      '.actor-name a' // fallback
+    ];
+
+    const titleSelectors = [
+      '.entity-result__primary-subtitle',
+      '.entity-result__subtitle',
+      '.search-result__info .subline-level-1',
+      '.artdeco-entity-lockup__subtitle',
+      '.subline-level-1'
+    ];
+
+    const locationSelectors = [
+      '.entity-result__secondary-subtitle',
+      '.search-result__info .subline-level-2',
+      '.artdeco-entity-lockup__metadata',
+      '.subline-level-2'
+    ];
+
+    const connectButtonSelectors = [
+      // Primary Connect button patterns
+      'button[aria-label*="Invite"][aria-label*="connect"]',
+      'button[aria-label*="Connect"]',
+      'button[data-control-name="connect"]',
+      'button[data-control-name="invite"]',
+
+      // Updated selectors for current LinkedIn UI (2024)
+      '.artdeco-button--secondary[aria-label*="connect"]',
+      '.artdeco-button[aria-label*="Connect"]',
+      'button[aria-label*="Invite"]',
+
+      // More specific search result button selectors
+      '.entity-result__actions button[aria-label*="connect"]',
+      '.entity-result__actions button[aria-label*="Connect"]',
+      '.entity-result__actions button[aria-label*="Invite"]',
+
+      // Fallback patterns - any button in the actions area
+      '.search-result__actions button',
+      '.entity-result__actions button',
+
+      // Even broader fallbacks
+      'button[aria-label*="connect" i]', // case insensitive
+      'button[aria-label*="Connect" i]',
+      'button[aria-label*="invite" i]'
+    ];
+
+    const nameElement = findFirstElement(element, nameSelectors);
+    const titleElement = findFirstElement(element, titleSelectors);
+    const locationElement = findFirstElement(element, locationSelectors);
+    const connectButton = findFirstElement(element, connectButtonSelectors);
 
     if (!nameElement) {
+      console.log('No name element found in search result:', element);
       return null;
     }
+
+    const profileName = nameElement.textContent?.trim() || 'Unknown';
+
+    // Debug: Check what buttons exist in this search result
+    const allButtons = element.querySelectorAll('button');
+    console.log(`Profile "${profileName}": Found ${allButtons.length} buttons in search result`);
+    allButtons.forEach((btn, index) => {
+      const btnText = btn.textContent?.trim() || '';
+      const ariaLabel = btn.getAttribute('aria-label') || '';
+      console.log(`  Button ${index + 1}: "${btnText}" (aria-label: "${ariaLabel}")`);
+    });
 
     // Safe check for connect button
     let canConnect = false;
     if (connectButton) {
+      console.log(`Profile "${profileName}": Found connect button -`, {
+        text: connectButton.textContent?.trim(),
+        ariaLabel: connectButton.getAttribute('aria-label'),
+        className: connectButton.className
+      });
+
       try {
         canConnect = isConnectButtonClickable(connectButton);
+        console.log(`Profile "${profileName}": Can connect = ${canConnect}`);
       } catch (error) {
+        console.log(`Profile "${profileName}": Error checking button clickability:`, error);
         canConnect = false;
       }
+    } else {
+      console.log(`Profile "${profileName}": No connect button found`);
     }
 
     return {
@@ -259,6 +445,28 @@ export function extractProfileFromSearchResult(element) {
 }
 
 /**
+ * Helper function to find first matching element from multiple selectors
+ * @param {Element} parent - Parent element to search within
+ * @param {Array} selectors - Array of CSS selectors to try
+ * @returns {Element|null} First matching element
+ */
+function findFirstElement(parent, selectors) {
+  for (const selector of selectors) {
+    try {
+      const element = parent.querySelector(selector);
+      if (element) {
+        return element;
+      }
+    } catch (error) {
+      // Selector might have invalid syntax, skip it
+      console.log(`Invalid selector skipped: ${selector}`, error.message);
+      continue;
+    }
+  }
+  return null;
+}
+
+/**
  * Detect if user has premium LinkedIn account
  * @returns {boolean} True if premium account detected
  */
@@ -269,9 +477,7 @@ export function hasPremiumAccount() {
     '.artdeco-icon[data-test-id="premium-icon"]'
   ];
 
-  return premiumIndicators.some(selector =>
-    document.querySelector(selector) !== null
-  );
+  return premiumIndicators.some(selector => document.querySelector(selector) !== null);
 }
 
 /**

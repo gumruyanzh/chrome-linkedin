@@ -41,7 +41,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup/*", "content/*"],
+      "resources": [
+        "popup/*",
+        "content/*",
+        "components/*",
+        "styles/*",
+        "*.js",
+        "analytics-*.js",
+        "storage-*.js"
+      ],
       "matches": ["https://*.linkedin.com/*"]
     }
   ]

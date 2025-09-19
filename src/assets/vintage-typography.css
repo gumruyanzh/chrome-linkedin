@@ -1,0 +1,450 @@
+/**
+ * Vintage Newspaper Typography System
+ * Base typography styles for classic newspaper-inspired design
+ */
+
+/* Base font loading and fallbacks */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+/* CSS Custom Properties for typography */
+:root {
+  /* Font stacks */
+  --font-newspaper: 'Crimson Text', Georgia, 'Times New Roman', Times, serif;
+  --font-serif-fallback: Georgia, 'Times New Roman', Times, serif;
+
+  /* Typography scale */
+  --text-vintage-xs: 10px;
+  --text-vintage-sm: 12px;
+  --text-vintage-base: 14px;
+  --text-vintage-lg: 16px;
+  --text-vintage-xl: 18px;
+  --text-vintage-2xl: 20px;
+  --text-vintage-3xl: 24px;
+  --text-vintage-4xl: 28px;
+
+  /* Line heights */
+  --leading-vintage-tight: 1.1;
+  --leading-vintage-snug: 1.2;
+  --leading-vintage-normal: 1.3;
+  --leading-vintage-relaxed: 1.5;
+  --leading-vintage-loose: 1.6;
+
+  /* Font weights */
+  --weight-vintage-normal: 400;
+  --weight-vintage-medium: 500;
+  --weight-vintage-semibold: 600;
+  --weight-vintage-bold: 700;
+
+  /* Text colors */
+  --color-vintage-ink: #2F2F2F;
+  --color-vintage-ink-light: #4A4A4A;
+  --color-vintage-accent: #3D405B;
+  --color-vintage-sepia: #E07A5F;
+  --color-vintage-sage: #81B29A;
+}
+
+/* Base typography classes */
+.vintage-text {
+  font-family: var(--font-newspaper);
+  color: var(--color-vintage-ink);
+  font-feature-settings: "liga" 1, "kern" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Newspaper headline styles */
+.vintage-headline {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-3xl);
+  font-weight: var(--weight-vintage-bold);
+  line-height: var(--leading-vintage-snug);
+  color: var(--color-vintage-ink);
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.vintage-headline.large {
+  font-size: var(--text-vintage-4xl);
+  line-height: var(--leading-vintage-tight);
+  margin-bottom: 20px;
+}
+
+.vintage-headline.small {
+  font-size: var(--text-vintage-2xl);
+  line-height: var(--leading-vintage-normal);
+  margin-bottom: 12px;
+}
+
+/* Subheadline styles */
+.vintage-subheadline {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-xl);
+  font-weight: var(--weight-vintage-semibold);
+  line-height: var(--leading-vintage-normal);
+  color: var(--color-vintage-ink);
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+/* Body text styles */
+.vintage-body {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-base);
+  font-weight: var(--weight-vintage-normal);
+  line-height: var(--leading-vintage-loose);
+  color: var(--color-vintage-ink);
+  margin-bottom: 8px;
+}
+
+.vintage-body.large {
+  font-size: var(--text-vintage-lg);
+  line-height: var(--leading-vintage-relaxed);
+}
+
+.vintage-body.small {
+  font-size: var(--text-vintage-sm);
+  line-height: var(--leading-vintage-relaxed);
+}
+
+/* Caption and fine print */
+.vintage-caption {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-sm);
+  font-weight: var(--weight-vintage-normal);
+  line-height: var(--leading-vintage-relaxed);
+  color: var(--color-vintage-accent);
+  font-style: italic;
+  margin-bottom: 4px;
+}
+
+.vintage-fine-print {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-xs);
+  font-weight: var(--weight-vintage-normal);
+  line-height: var(--leading-vintage-relaxed);
+  color: var(--color-vintage-ink-light);
+}
+
+/* Emphasis and styling variants */
+.vintage-emphasis {
+  font-weight: var(--weight-vintage-semibold);
+  color: var(--color-vintage-accent);
+}
+
+.vintage-accent {
+  color: var(--color-vintage-sepia);
+}
+
+.vintage-muted {
+  color: var(--color-vintage-ink-light);
+}
+
+.vintage-success {
+  color: var(--color-vintage-sage);
+}
+
+/* Quote and blockquote styles */
+.vintage-quote {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-lg);
+  font-style: italic;
+  line-height: var(--leading-vintage-relaxed);
+  color: var(--color-vintage-accent);
+  border-left: 3px solid var(--color-vintage-sepia);
+  padding-left: 16px;
+  margin: 16px 0;
+}
+
+/* Drop cap for newspaper effect */
+.vintage-drop-cap::first-letter {
+  font-size: 3.5em;
+  line-height: 0.8;
+  float: left;
+  margin: 0.1em 0.1em 0 0;
+  font-weight: var(--weight-vintage-bold);
+  color: var(--color-vintage-accent);
+}
+
+/* Newspaper-style lists */
+.vintage-list {
+  font-family: var(--font-newspaper);
+  font-size: var(--text-vintage-base);
+  line-height: var(--leading-vintage-relaxed);
+  color: var(--color-vintage-ink);
+}
+
+.vintage-list li {
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.vintage-list.bulleted li::before {
+  content: "•";
+  color: var(--color-vintage-sepia);
+  font-weight: var(--weight-vintage-bold);
+  position: absolute;
+  left: -16px;
+}
+
+/* Responsive typography adjustments */
+@media (max-width: 400px) {
+  .vintage-headline {
+    font-size: var(--text-vintage-2xl);
+  }
+
+  .vintage-headline.large {
+    font-size: var(--text-vintage-3xl);
+  }
+
+  .vintage-subheadline {
+    font-size: var(--text-vintage-lg);
+  }
+
+  .vintage-body {
+    font-size: var(--text-vintage-sm);
+  }
+}
+
+@media (min-width: 768px) {
+  .vintage-headline.large {
+    font-size: 32px;
+    line-height: 1.05;
+  }
+
+  .vintage-body.large {
+    font-size: var(--text-vintage-xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .vintage-headline.large {
+    font-size: 36px;
+  }
+
+  .vintage-quote {
+    font-size: var(--text-vintage-xl);
+    padding-left: 24px;
+    margin: 24px 0;
+  }
+}
+
+/* Vintage Toggle Switch Styling */
+.vintage-toggle-switch {
+  background-color: var(--vintage-paper);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.vintage-toggle-switch:has(input:checked) {
+  background-color: var(--vintage-sepia);
+}
+
+.vintage-toggle-knob {
+  transform: translateX(0.25rem);
+  transition: transform 0.2s ease-in-out;
+}
+
+.vintage-toggle-switch:has(input:checked) .vintage-toggle-knob {
+  transform: translateX(1.5rem);
+}
+
+.vintage-toggle-switch:has(input:focus) {
+  outline: 2px solid var(--vintage-sepia);
+  outline-offset: 2px;
+  outline-opacity: 0.2;
+}
+
+/* Settings form specific styling */
+.vintage-settings-section {
+  margin-bottom: 2rem;
+}
+
+.vintage-field-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.vintage-field-label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.vintage-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--vintage-sepia);
+  box-shadow-opacity: 0.2;
+}
+
+.vintage-help-text {
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Vintage Paper Border Effects */
+.vintage-paper-border {
+  position: relative;
+  border: 2px solid var(--color-vintage-accent);
+  border-opacity: 0.3;
+  border-radius: 8px;
+  background-color: var(--vintage-paper, #F4F1DE);
+}
+
+.vintage-paper-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  pointer-events: none;
+  border-radius: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-opacity='0.03'%3E%3Cpolygon fill='%23000' points='50 0 60 40 100 50 60 60 50 100 40 60 0 50 40 40'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.vintage-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-color: var(--color-vintage-sepia);
+  opacity: 0.3;
+}
+
+.vintage-corner-top-left {
+  top: 0;
+  left: 0;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+
+.vintage-corner-top-right {
+  top: 0;
+  right: 0;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+
+.vintage-corner-bottom-left {
+  bottom: 0;
+  left: 0;
+  border-bottom: 2px solid;
+  border-left: 2px solid;
+}
+
+.vintage-corner-bottom-right {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+/* Vintage Shadow System */
+.vintage-shadow-container {
+  position: relative;
+}
+
+.vintage-shadow-element {
+  position: relative;
+  z-index: 10;
+}
+
+.vintage-shadow-layer {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-vintage-ink);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.vintage-shadow-layer-1 {
+  transform: translate(2px, 2px);
+  opacity: 0.1;
+  filter: blur(4px);
+  z-index: -1;
+}
+
+.vintage-shadow-layer-2 {
+  transform: translate(4px, 4px);
+  opacity: 0.08;
+  filter: blur(8px);
+  z-index: -2;
+}
+
+.vintage-shadow-layer-3 {
+  transform: translate(8px, 8px);
+  opacity: 0.06;
+  filter: blur(16px);
+  z-index: -3;
+}
+
+/* Vintage Modal Enhancements */
+.vintage-modal-overlay {
+  backdrop-filter: blur(8px);
+}
+
+.vintage-modal {
+  animation: vintageModalEnter 0.3s ease-out;
+}
+
+@keyframes vintageModalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.9) rotate(1deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.vintage-connection-overlay {
+  animation: vintageSlideInRight 0.4s ease-out;
+}
+
+@keyframes vintageSlideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Print-specific styles for true newspaper feel */
+@media print {
+  .vintage-text,
+  .vintage-headline,
+  .vintage-subheadline,
+  .vintage-body,
+  .vintage-caption {
+    font-family: var(--font-serif-fallback);
+    color: #000000 !important;
+  }
+
+  .vintage-headline {
+    page-break-after: avoid;
+  }
+
+  .vintage-quote {
+    page-break-inside: avoid;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .vintage-text,
+  .vintage-headline,
+  .vintage-subheadline,
+  .vintage-body {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-vintage-ink: #000000;
+    --color-vintage-ink-light: #333333;
+    --color-vintage-accent: #000080;
+  }
+}

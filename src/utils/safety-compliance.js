@@ -10,7 +10,7 @@ const DEFAULT_SAFETY_SETTINGS = {
   hourlyConnectionLimit: 5,
   delayBetweenRequests: {
     min: 3000, // 3 seconds
-    max: 8000  // 8 seconds
+    max: 8000 // 8 seconds
   },
   workingHours: {
     enabled: true,
@@ -42,21 +42,19 @@ class RateLimitTracker {
       const settings = await getSafetySettings();
       const now = Date.now();
       const todayStart = new Date().setHours(0, 0, 0, 0);
-      const hourAgo = now - (60 * 60 * 1000);
+      const hourAgo = now - 60 * 60 * 1000;
 
       // Get recent activity from storage
-      const analytics = await getStorageData(STORAGE_KEYS.ANALYTICS);
-      const recentActivity = analytics.analytics || [];
+      const result = await getStorageData(STORAGE_KEYS.ANALYTICS);
+      const recentActivity = result.analytics || [];
 
       // Filter connection attempts
-      const todayConnections = recentActivity.filter(entry =>
-        entry.type === 'connection_sent' &&
-        entry.timestamp >= todayStart
+      const todayConnections = recentActivity.filter(
+        entry => entry.type === 'connection_sent' && entry.timestamp >= todayStart
       );
 
-      const hourlyConnections = recentActivity.filter(entry =>
-        entry.type === 'connection_sent' &&
-        entry.timestamp >= hourAgo
+      const hourlyConnections = recentActivity.filter(
+        entry => entry.type === 'connection_sent' && entry.timestamp >= hourAgo
       );
 
       // Check daily limit
@@ -65,7 +63,7 @@ class RateLimitTracker {
           allowed: false,
           reason: 'DAILY_LIMIT_EXCEEDED',
           message: `Daily limit of ${settings.dailyConnectionLimit} connections reached`,
-          waitUntil: todayStart + (24 * 60 * 60 * 1000)
+          waitUntil: todayStart + 24 * 60 * 60 * 1000
         };
       }
 
@@ -75,7 +73,7 @@ class RateLimitTracker {
           allowed: false,
           reason: 'HOURLY_LIMIT_EXCEEDED',
           message: `Hourly limit of ${settings.hourlyConnectionLimit} connections reached`,
-          waitUntil: hourAgo + (60 * 60 * 1000)
+          waitUntil: hourAgo + 60 * 60 * 1000
         };
       }
 
@@ -104,7 +102,6 @@ class RateLimitTracker {
         remainingDaily: settings.dailyConnectionLimit - todayConnections.length,
         remainingHourly: settings.hourlyConnectionLimit - hourlyConnections.length
       };
-
     } catch (error) {
       console.error('Error checking rate limit:', error);
       return {
@@ -144,7 +141,6 @@ class RateLimitTracker {
       const additionalDelay = loadFactor * 2000;
 
       return Math.floor(baseDelay + longPause + additionalDelay);
-
     } catch (error) {
       console.error('Error generating human delay:', error);
       return DEFAULT_SAFETY_SETTINGS.delayBetweenRequests.min;
@@ -161,7 +157,7 @@ class RateLimitTracker {
     this.lastActivityTime = now;
 
     // Keep only last 24 hours of attempts
-    const dayAgo = now - (24 * 60 * 60 * 1000);
+    const dayAgo = now - 24 * 60 * 60 * 1000;
     this.connectionAttempts = this.connectionAttempts.filter(time => time >= dayAgo);
   }
 }
@@ -263,7 +259,6 @@ export async function performSafetyCheck() {
       remainingDaily: rateCheck.remainingDaily,
       remainingHourly: rateCheck.remainingHourly
     };
-
   } catch (error) {
     console.error('Error performing safety check:', error);
     return {
@@ -280,15 +275,13 @@ export async function performSafetyCheck() {
  */
 async function detectSuspiciousActivity() {
   try {
-    const analytics = await getStorageData(STORAGE_KEYS.ANALYTICS);
-    const recentActivity = (analytics.analytics || []).filter(
+    const result = await getStorageData(STORAGE_KEYS.ANALYTICS);
+    const recentActivity = (result.analytics || []).filter(
       entry => Date.now() - entry.timestamp < 60 * 60 * 1000 // Last hour
     );
 
     // Check for too many rapid requests
-    const connectionAttempts = recentActivity.filter(entry =>
-      entry.type === 'connection_sent'
-    );
+    const connectionAttempts = recentActivity.filter(entry => entry.type === 'connection_sent');
 
     if (connectionAttempts.length > 10) {
       return {
@@ -298,9 +291,7 @@ async function detectSuspiciousActivity() {
     }
 
     // Check for too many failures
-    const failures = recentActivity.filter(entry =>
-      entry.type === 'connection_failed'
-    );
+    const failures = recentActivity.filter(entry => entry.type === 'connection_failed');
 
     if (failures.length > 5) {
       return {
@@ -321,11 +312,13 @@ async function detectSuspiciousActivity() {
         }, []);
 
       const avgInterval = timings.reduce((a, b) => a + b, 0) / timings.length;
-      const variance = timings.reduce((sum, interval) =>
-        sum + Math.pow(interval - avgInterval, 2), 0) / timings.length;
+      const variance =
+        timings.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) /
+        timings.length;
 
       // If variance is too low, timing is too uniform (robotic)
-      if (variance < 1000000) { // Less than 1 second variance
+      if (variance < 1000000) {
+        // Less than 1 second variance
         return {
           detected: true,
           message: 'Robotic timing patterns detected'
@@ -334,7 +327,6 @@ async function detectSuspiciousActivity() {
     }
 
     return { detected: false };
-
   } catch (error) {
     console.error('Error detecting suspicious activity:', error);
     return { detected: false };
@@ -358,11 +350,10 @@ async function checkLinkedInCompliance() {
     }
 
     // Check daily LinkedIn limits (LinkedIn allows ~100-200 per week)
-    const analytics = await getStorageData(STORAGE_KEYS.ANALYTICS);
-    const weekStart = Date.now() - (7 * 24 * 60 * 60 * 1000);
-    const weeklyConnections = (analytics.analytics || []).filter(entry =>
-      entry.type === 'connection_sent' &&
-      entry.timestamp >= weekStart
+    const result = await getStorageData(STORAGE_KEYS.ANALYTICS);
+    const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const weeklyConnections = (result.analytics || []).filter(
+      entry => entry.type === 'connection_sent' && entry.timestamp >= weekStart
     );
 
     if (weeklyConnections.length > 100) {
@@ -374,7 +365,6 @@ async function checkLinkedInCompliance() {
     }
 
     return { compliant: true };
-
   } catch (error) {
     console.error('Error checking LinkedIn compliance:', error);
     return { compliant: true }; // Default to compliant on error
@@ -387,7 +377,9 @@ async function checkLinkedInCompliance() {
  * @returns {boolean} True if within working hours
  */
 function isWithinWorkingHours(workingHours) {
-  if (!workingHours.enabled) return true;
+  if (!workingHours.enabled) {
+    return true;
+  }
 
   const now = new Date();
   const currentTime = now.getHours() * 100 + now.getMinutes();
@@ -439,7 +431,7 @@ function getNextWorkingHourStart(workingHours) {
  */
 function getNextWeekdayStart() {
   const now = new Date();
-  let nextWeekday = new Date(now);
+  const nextWeekday = new Date(now);
 
   // Find next Monday
   const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
@@ -477,8 +469,8 @@ export async function emergencyStopAutomation(reason) {
     await updateSafetySettings(updatedSettings);
 
     // Log the emergency stop
-    const analytics = await getStorageData(STORAGE_KEYS.ANALYTICS);
-    const analyticsData = analytics.analytics || [];
+    const result = await getStorageData(STORAGE_KEYS.ANALYTICS);
+    const analyticsData = result.analytics || [];
 
     analyticsData.push({
       type: 'emergency_stop',
@@ -487,7 +479,6 @@ export async function emergencyStopAutomation(reason) {
     });
 
     await setStorageData({ [STORAGE_KEYS.ANALYTICS]: analyticsData });
-
   } catch (error) {
     console.error('Error performing emergency stop:', error);
   }

@@ -66,7 +66,6 @@ export async function createTemplateLibrary(config = {}) {
     });
 
     return library;
-
   } catch (error) {
     console.error('Error creating template library:', error);
     throw error;
@@ -136,7 +135,6 @@ export async function saveTemplateWithMetadata(templateData) {
 
     await saveTemplateLibrary(library);
     return template;
-
   } catch (error) {
     console.error('Error saving template with metadata:', error);
     throw error;
@@ -194,7 +192,6 @@ export async function updateTemplateMetadata(templateId, updates) {
 
     await saveTemplateLibrary(library);
     return updatedTemplate;
-
   } catch (error) {
     console.error('Error updating template metadata:', error);
     throw error;
@@ -227,8 +224,10 @@ export async function deleteTemplate(templateId, options = {}) {
       const usageThreshold = options.highUsageThreshold || 50;
       const performanceThreshold = options.highPerformanceThreshold || 0.25;
 
-      if (template.usageCount >= usageThreshold ||
-          template.performanceMetrics.responseRate >= performanceThreshold) {
+      if (
+        template.usageCount >= usageThreshold ||
+        template.performanceMetrics.responseRate >= performanceThreshold
+      ) {
         return {
           success: false,
           reason: 'HIGH_USAGE_TEMPLATE',
@@ -251,7 +250,6 @@ export async function deleteTemplate(templateId, options = {}) {
       deletedTemplate,
       message: 'Template deleted successfully'
     };
-
   } catch (error) {
     console.error('Error deleting template:', error);
     return {
@@ -287,7 +285,6 @@ export async function getTemplatesByCategory(category, options = {}) {
     }
 
     return templates;
-
   } catch (error) {
     console.error('Error getting templates by category:', error);
     return [];
@@ -306,7 +303,9 @@ export async function getTemplatesByTag(tags, options = {}) {
     const tagArray = Array.isArray(tags) ? tags : [tags];
 
     let templates = library.templates.filter(template => {
-      if (!template.tags) return false;
+      if (!template.tags) {
+        return false;
+      }
 
       if (options.matchAll) {
         return tagArray.every(tag => template.tags.includes(tag));
@@ -320,7 +319,6 @@ export async function getTemplatesByTag(tags, options = {}) {
     }
 
     return templates;
-
   } catch (error) {
     console.error('Error getting templates by tag:', error);
     return [];
@@ -369,14 +367,15 @@ export async function searchTemplates(query, options = {}) {
 
     // Calculate relevance scores if requested
     if (options.includeRelevance) {
-      return templates.map(template => ({
-        ...template,
-        relevanceScore: calculateSearchRelevance(template, query)
-      })).sort((a, b) => b.relevanceScore - a.relevanceScore);
+      return templates
+        .map(template => ({
+          ...template,
+          relevanceScore: calculateSearchRelevance(template, query)
+        }))
+        .sort((a, b) => b.relevanceScore - a.relevanceScore);
     }
 
     return templates;
-
   } catch (error) {
     console.error('Error searching templates:', error);
     return [];
@@ -454,7 +453,6 @@ export async function exportTemplates(options = {}) {
       data: result,
       count: templates.length
     };
-
   } catch (error) {
     console.error('Error exporting templates:', error);
     return {
@@ -501,9 +499,9 @@ export async function importTemplates(importData, options = {}) {
 
         // Check for duplicates
         if (options.preventDuplicates) {
-          const isDuplicate = library.templates.some(existing =>
-            existing.name === templateData.name ||
-            existing.message === templateData.message
+          const isDuplicate = library.templates.some(
+            existing =>
+              existing.name === templateData.name || existing.message === templateData.message
           );
 
           if (isDuplicate) {
@@ -552,7 +550,6 @@ export async function importTemplates(importData, options = {}) {
             }
           });
         }
-
       } catch (error) {
         results.errors.push({
           template: templateData.name || 'Unnamed',
@@ -566,7 +563,6 @@ export async function importTemplates(importData, options = {}) {
     await saveTemplateLibrary(library);
 
     return results;
-
   } catch (error) {
     console.error('Error importing templates:', error);
     return {
@@ -591,9 +587,10 @@ export async function getTemplatePerformanceAnalytics(templateId, options = {}) 
     const events = analytics.analytics || [];
 
     // Filter events for this template
-    const templateEvents = events.filter(event =>
-      event.templateId === templateId ||
-      (event.type.includes('template') && event.templateId === templateId)
+    const templateEvents = events.filter(
+      event =>
+        event.templateId === templateId ||
+        (event.type.includes('template') && event.templateId === templateId)
     );
 
     // Calculate metrics
@@ -611,9 +608,9 @@ export async function getTemplatePerformanceAnalytics(templateId, options = {}) 
     // Calculate response times
     const responseTimes = [];
     connectionEvents.forEach(sentEvent => {
-      const response = [...acceptedEvents, ...declinedEvents].find(respEvent =>
-        respEvent.profileId === sentEvent.profileId &&
-        respEvent.timestamp > sentEvent.timestamp
+      const response = [...acceptedEvents, ...declinedEvents].find(
+        respEvent =>
+          respEvent.profileId === sentEvent.profileId && respEvent.timestamp > sentEvent.timestamp
       );
 
       if (response) {
@@ -621,8 +618,10 @@ export async function getTemplatePerformanceAnalytics(templateId, options = {}) 
       }
     });
 
-    const averageResponseTime = responseTimes.length > 0 ?
-      responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length : 0;
+    const averageResponseTime =
+      responseTimes.length > 0
+        ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+        : 0;
 
     return {
       templateId,
@@ -637,7 +636,6 @@ export async function getTemplatePerformanceAnalytics(templateId, options = {}) 
       timeline: options.includeTimeline ? generateTimeline(templateEvents) : undefined,
       insights: options.includeInsights ? generateInsights(templateEvents) : undefined
     };
-
   } catch (error) {
     console.error('Error getting template performance analytics:', error);
     return null;
@@ -676,8 +674,11 @@ export async function getTemplateUsageStats(options = {}) {
 
     // Calculate average response rate
     const templatesWithMetrics = templates.filter(t => t.performanceMetrics.responseRate > 0);
-    const averageResponseRate = templatesWithMetrics.length > 0 ?
-      templatesWithMetrics.reduce((sum, t) => sum + t.performanceMetrics.responseRate, 0) / templatesWithMetrics.length : 0;
+    const averageResponseRate =
+      templatesWithMetrics.length > 0
+        ? templatesWithMetrics.reduce((sum, t) => sum + t.performanceMetrics.responseRate, 0) /
+          templatesWithMetrics.length
+        : 0;
 
     const stats = {
       totalTemplates: templates.length,
@@ -699,7 +700,6 @@ export async function getTemplateUsageStats(options = {}) {
     }
 
     return stats;
-
   } catch (error) {
     console.error('Error getting template usage statistics:', error);
     return null;
@@ -772,7 +772,6 @@ export async function optimizeTemplateLibrary(options = {}) {
 
     await saveTemplateLibrary(library);
     return results;
-
   } catch (error) {
     console.error('Error optimizing template library:', error);
     return {
@@ -793,7 +792,6 @@ export async function getTemplateVersionHistory(templateId) {
     const versions = versionsData.template_versions || {};
 
     return (versions[templateId] || []).sort((a, b) => b.version - a.version);
-
   } catch (error) {
     console.error('Error getting template version history:', error);
     return [];
@@ -857,7 +855,6 @@ export async function rollbackTemplateVersion(templateId, targetVersion) {
       newVersion: rolledBackTemplate.version,
       template: rolledBackTemplate
     };
-
   } catch (error) {
     console.error('Error rolling back template version:', error);
     return {
@@ -901,7 +898,7 @@ export async function shareTemplate(templateId, shareOptions) {
       shareWith: shareOptions.shareWith || 'public',
       allowEditing: shareOptions.allowEditing || false,
       createdAt: Date.now(),
-      expiresAt: shareOptions.expiresAt || (Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      expiresAt: shareOptions.expiresAt || Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
       createdBy: shareOptions.createdBy || 'anonymous'
     };
 
@@ -919,7 +916,6 @@ export async function shareTemplate(templateId, shareOptions) {
       expiresAt: shareData.expiresAt,
       shareData
     };
-
   } catch (error) {
     console.error('Error sharing template:', error);
     return {
@@ -986,7 +982,6 @@ export async function duplicateTemplate(templateId, options = {}) {
       duplicatedTemplate,
       originalTemplate
     };
-
   } catch (error) {
     console.error('Error duplicating template:', error);
     return {
@@ -1053,7 +1048,6 @@ export async function validateTemplateLibrary(options = {}) {
     }
 
     return result;
-
   } catch (error) {
     console.error('Error validating template library:', error);
     return {
@@ -1071,7 +1065,7 @@ export async function validateTemplateLibrary(options = {}) {
 
 async function getTemplateLibrary() {
   const data = await getStorageData(STORAGE_KEYS.TEMPLATE_LIBRARY);
-  return data.template_library || await createTemplateLibrary();
+  return data.template_library || (await createTemplateLibrary());
 }
 
 async function saveTemplateLibrary(library) {
@@ -1168,15 +1162,21 @@ function calculatePersonalizationPotential(message) {
   const socialVars = ['mutualConnections', 'location'];
 
   personalVars.forEach(v => {
-    if (variables.includes(v)) score += 0.2;
+    if (variables.includes(v)) {
+      score += 0.2;
+    }
   });
 
   professionalVars.forEach(v => {
-    if (variables.includes(v)) score += 0.15;
+    if (variables.includes(v)) {
+      score += 0.15;
+    }
   });
 
   socialVars.forEach(v => {
-    if (variables.includes(v)) score += 0.25;
+    if (variables.includes(v)) {
+      score += 0.25;
+    }
   });
 
   return Math.min(score, 1.0);
@@ -1201,9 +1201,7 @@ function sortTemplates(templates, sortBy, sortOrder = 'desc') {
 
     // Handle different data types
     if (typeof aValue === 'string') {
-      return sortOrder === 'asc' ?
-        aValue.localeCompare(bValue) :
-        bValue.localeCompare(aValue);
+      return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
     }
 
     if (typeof aValue === 'number') {
@@ -1266,7 +1264,9 @@ function applyFilters(templates, filters) {
 }
 
 function convertToCsv(templates) {
-  if (templates.length === 0) return '';
+  if (templates.length === 0) {
+    return '';
+  }
 
   const headers = ['id', 'name', 'message', 'category', 'tags', 'createdAt'];
   const csvRows = [headers.join(',')];
@@ -1289,12 +1289,16 @@ function convertToXml(data) {
   // Basic XML conversion - would need more sophisticated implementation
   return `<?xml version="1.0" encoding="UTF-8"?>
 <templates>
-  ${data.templates.map(template => `
+  ${data.templates
+    .map(
+      template => `
   <template id="${template.id}">
     <name>${escapeXml(template.name)}</name>
     <message>${escapeXml(template.message)}</message>
     <category>${escapeXml(template.category)}</category>
-  </template>`).join('')}
+  </template>`
+    )
+    .join('')}
 </templates>`;
 }
 
@@ -1384,8 +1388,10 @@ function getTopPerformingTemplates(templates, limit = 5) {
   return templates
     .filter(t => t.performanceMetrics.responseRate > 0)
     .sort((a, b) => {
-      const scoreA = a.performanceMetrics.responseRate * 0.6 + a.performanceMetrics.acceptanceRate * 0.4;
-      const scoreB = b.performanceMetrics.responseRate * 0.6 + b.performanceMetrics.acceptanceRate * 0.4;
+      const scoreA =
+        a.performanceMetrics.responseRate * 0.6 + a.performanceMetrics.acceptanceRate * 0.4;
+      const scoreB =
+        b.performanceMetrics.responseRate * 0.6 + b.performanceMetrics.acceptanceRate * 0.4;
       return scoreB - scoreA;
     })
     .slice(0, limit);
@@ -1399,7 +1405,7 @@ function getLowPerformingTemplates(templates, limit = 5) {
 }
 
 function getTrendingTemplates(templates) {
-  const recentThreshold = Date.now() - (7 * 24 * 60 * 60 * 1000); // 7 days
+  const recentThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000; // 7 days
 
   return templates
     .filter(t => t.updatedAt > recentThreshold && t.usageCount > 0)
@@ -1493,10 +1499,12 @@ function optimizePerformanceMetrics(library) {
     // Recalculate metrics based on actual data
     if (template.performanceMetrics.totalConnections > 0) {
       template.performanceMetrics.responseRate =
-        (template.performanceMetrics.totalResponses || 0) / template.performanceMetrics.totalConnections;
+        (template.performanceMetrics.totalResponses || 0) /
+        template.performanceMetrics.totalConnections;
 
       template.performanceMetrics.acceptanceRate =
-        (template.performanceMetrics.totalAccepted || 0) / template.performanceMetrics.totalConnections;
+        (template.performanceMetrics.totalAccepted || 0) /
+        template.performanceMetrics.totalConnections;
     }
   });
 }
@@ -1506,7 +1514,9 @@ function calculateTemplateSimilarity(template1, template2) {
   const message1 = template1.message.toLowerCase();
   const message2 = template2.message.toLowerCase();
 
-  if (message1 === message2) return 1.0;
+  if (message1 === message2) {
+    return 1.0;
+  }
 
   // Calculate Jaccard similarity
   const words1 = new Set(message1.split(/\s+/));
@@ -1522,10 +1532,10 @@ function suggestCategory(message) {
   const lowerMessage = message.toLowerCase();
 
   const categoryKeywords = {
-    'Professional': ['work', 'company', 'professional', 'career', 'industry', 'experience'],
-    'Sales': ['sales', 'product', 'service', 'offer', 'solution', 'business opportunity'],
-    'Recruiting': ['opportunity', 'role', 'position', 'job', 'hiring', 'career move'],
-    'Networking': ['connect', 'network', 'relationship', 'mutual', 'introduction'],
+    Professional: ['work', 'company', 'professional', 'career', 'industry', 'experience'],
+    Sales: ['sales', 'product', 'service', 'offer', 'solution', 'business opportunity'],
+    Recruiting: ['opportunity', 'role', 'position', 'job', 'hiring', 'career move'],
+    Networking: ['connect', 'network', 'relationship', 'mutual', 'introduction'],
     'Follow-up': ['following up', 'follow up', 'thanks', 'thank you', 'meeting', 'spoke'],
     'Event-Based': ['event', 'conference', 'meetup', 'webinar', 'presentation']
   };
@@ -1545,11 +1555,11 @@ function generateSmartTags(template) {
 
   // Industry tags
   const industryKeywords = {
-    'technology': ['tech', 'software', 'development', 'programming', 'developer'],
-    'finance': ['finance', 'banking', 'investment', 'financial'],
-    'healthcare': ['healthcare', 'medical', 'health', 'doctor'],
-    'marketing': ['marketing', 'advertising', 'brand', 'campaign'],
-    'sales': ['sales', 'revenue', 'business development', 'selling']
+    technology: ['tech', 'software', 'development', 'programming', 'developer'],
+    finance: ['finance', 'banking', 'investment', 'financial'],
+    healthcare: ['healthcare', 'medical', 'health', 'doctor'],
+    marketing: ['marketing', 'advertising', 'brand', 'campaign'],
+    sales: ['sales', 'revenue', 'business development', 'selling']
   };
 
   for (const [tag, keywords] of Object.entries(industryKeywords)) {
@@ -1597,8 +1607,7 @@ function generateInsights(events) {
     usageByHour[hour] = (usageByHour[hour] || 0) + 1;
   });
 
-  const peakHour = Object.entries(usageByHour)
-    .sort(([,a], [,b]) => b - a)[0];
+  const peakHour = Object.entries(usageByHour).sort(([, a], [, b]) => b - a)[0];
 
   if (peakHour) {
     insights.push({

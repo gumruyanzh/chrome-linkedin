@@ -21,14 +21,17 @@ class AnalyticsDashboard {
     this.renderDashboard();
 
     // Auto-refresh every 5 minutes
-    setInterval(() => {
-      this.loadData(true);
-    }, 5 * 60 * 1000);
+    setInterval(
+      () => {
+        this.loadData(true);
+      },
+      5 * 60 * 1000
+    );
   }
 
   setupEventListeners() {
     // Date range selection
-    document.getElementById('date-range').addEventListener('change', (e) => {
+    document.getElementById('date-range').addEventListener('change', e => {
       const value = e.target.value;
       if (value === 'custom') {
         this.showDateRangeModal();
@@ -45,7 +48,7 @@ class AnalyticsDashboard {
 
     // Chart period buttons
     document.querySelectorAll('.chart-period-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', e => {
         this.chartPeriod = e.target.dataset.period;
         this.updateChartPeriodButtons();
         this.updateTimeSeriesCharts();
@@ -98,7 +101,8 @@ class AnalyticsDashboard {
       if (btn.dataset.period === this.chartPeriod) {
         btn.className = 'chart-period-btn text-sm px-3 py-1 rounded-md bg-blue-600 text-white';
       } else {
-        btn.className = 'chart-period-btn text-sm px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100';
+        btn.className =
+          'chart-period-btn text-sm px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100';
       }
     });
   }
@@ -115,7 +119,7 @@ class AnalyticsDashboard {
       };
 
       if (this.dateRange.days) {
-        options.startDate = Date.now() - (this.dateRange.days * 24 * 60 * 60 * 1000);
+        options.startDate = Date.now() - this.dateRange.days * 24 * 60 * 60 * 1000;
         options.endDate = Date.now();
       } else {
         options.startDate = this.dateRange.startDate;
@@ -124,7 +128,6 @@ class AnalyticsDashboard {
 
       this.currentData = await this.analyticsEngine.calculateAnalytics(options);
       this.renderDashboard();
-
     } catch (error) {
       console.error('Error loading analytics data:', error);
       this.showError('Failed to load analytics data. Please try again.');
@@ -136,7 +139,9 @@ class AnalyticsDashboard {
   }
 
   renderDashboard() {
-    if (!this.currentData) return;
+    if (!this.currentData) {
+      return;
+    }
 
     this.renderSummaryCards();
     this.renderCharts();
@@ -150,8 +155,13 @@ class AnalyticsDashboard {
     const { summary } = this.currentData;
 
     // Total Connections
-    document.getElementById('total-connections').textContent = summary.totalConnections.toLocaleString();
-    this.renderChangeIndicator('connections-change', summary.totalConnections, 'connections this period');
+    document.getElementById('total-connections').textContent =
+      summary.totalConnections.toLocaleString();
+    this.renderChangeIndicator(
+      'connections-change',
+      summary.totalConnections,
+      'connections this period'
+    );
 
     // Acceptance Rate
     document.getElementById('acceptance-rate').textContent = `${summary.acceptanceRate}%`;
@@ -224,7 +234,7 @@ class AnalyticsDashboard {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'top',
+            position: 'top'
           }
         },
         scales: {
@@ -250,23 +260,25 @@ class AnalyticsDashboard {
 
     const data = {
       labels: conversion.conversionFunnel.map(stage => stage.name),
-      datasets: [{
-        label: 'Conversion Rate (%)',
-        data: conversion.conversionFunnel.map(stage => stage.rate),
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(34, 197, 94, 0.8)',
-          'rgba(147, 51, 234, 0.8)',
-          'rgba(249, 115, 22, 0.8)'
-        ],
-        borderColor: [
-          'rgb(59, 130, 246)',
-          'rgb(34, 197, 94)',
-          'rgb(147, 51, 234)',
-          'rgb(249, 115, 22)'
-        ],
-        borderWidth: 2
-      }]
+      datasets: [
+        {
+          label: 'Conversion Rate (%)',
+          data: conversion.conversionFunnel.map(stage => stage.rate),
+          backgroundColor: [
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(147, 51, 234, 0.8)',
+            'rgba(249, 115, 22, 0.8)'
+          ],
+          borderColor: [
+            'rgb(59, 130, 246)',
+            'rgb(34, 197, 94)',
+            'rgb(147, 51, 234)',
+            'rgb(249, 115, 22)'
+          ],
+          borderWidth: 2
+        }
+      ]
     };
 
     this.charts.conversionFunnel = new Chart(ctx, {
@@ -285,7 +297,7 @@ class AnalyticsDashboard {
             beginAtZero: true,
             max: 100,
             ticks: {
-              callback: function(value) {
+              callback: function (value) {
                 return value + '%';
               }
             }
@@ -304,20 +316,22 @@ class AnalyticsDashboard {
       this.charts.performanceTime.destroy();
     }
 
-    const labels = performance.hourlyAcceptance.map(hour =>
-      `${hour.hour.toString().padStart(2, '0')}:00`
+    const labels = performance.hourlyAcceptance.map(
+      hour => `${hour.hour.toString().padStart(2, '0')}:00`
     );
 
     const data = {
       labels,
-      datasets: [{
-        label: 'Acceptance Rate by Hour',
-        data: performance.hourlyAcceptance.map(hour => hour.rate),
-        borderColor: 'rgb(168, 85, 247)',
-        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-        tension: 0.4,
-        fill: true
-      }]
+      datasets: [
+        {
+          label: 'Acceptance Rate by Hour',
+          data: performance.hourlyAcceptance.map(hour => hour.rate),
+          borderColor: 'rgb(168, 85, 247)',
+          backgroundColor: 'rgba(168, 85, 247, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
     };
 
     this.charts.performanceTime = new Chart(ctx, {
@@ -335,7 +349,7 @@ class AnalyticsDashboard {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function(value) {
+              callback: function (value) {
                 return value + '%';
               }
             }
@@ -359,21 +373,24 @@ class AnalyticsDashboard {
 
     const data = {
       labels: topTemplates.map(template => template.name || 'Unknown'),
-      datasets: [{
-        label: 'Usage Count',
-        data: topTemplates.map(template => template.usage),
-        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-        borderColor: 'rgb(34, 197, 94)',
-        borderWidth: 2,
-        yAxisID: 'y'
-      }, {
-        label: 'Acceptance Rate (%)',
-        data: topTemplates.map(template => template.acceptanceRate),
-        backgroundColor: 'rgba(249, 115, 22, 0.8)',
-        borderColor: 'rgb(249, 115, 22)',
-        borderWidth: 2,
-        yAxisID: 'y1'
-      }]
+      datasets: [
+        {
+          label: 'Usage Count',
+          data: topTemplates.map(template => template.usage),
+          backgroundColor: 'rgba(34, 197, 94, 0.8)',
+          borderColor: 'rgb(34, 197, 94)',
+          borderWidth: 2,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Acceptance Rate (%)',
+          data: topTemplates.map(template => template.acceptanceRate),
+          backgroundColor: 'rgba(249, 115, 22, 0.8)',
+          borderColor: 'rgb(249, 115, 22)',
+          borderWidth: 2,
+          yAxisID: 'y1'
+        }
+      ]
     };
 
     this.charts.templatePerformance = new Chart(ctx, {
@@ -401,10 +418,10 @@ class AnalyticsDashboard {
             beginAtZero: true,
             max: 100,
             grid: {
-              drawOnChartArea: false,
+              drawOnChartArea: false
             },
             ticks: {
-              callback: function(value) {
+              callback: function (value) {
                 return value + '%';
               }
             }
@@ -421,7 +438,8 @@ class AnalyticsDashboard {
     container.innerHTML = '';
 
     if (insights.length === 0) {
-      container.innerHTML = '<p class="text-gray-500 italic">No insights available for this period.</p>';
+      container.innerHTML =
+        '<p class="text-gray-500 italic">No insights available for this period.</p>';
       return;
     }
 
@@ -474,7 +492,8 @@ class AnalyticsDashboard {
     tbody.innerHTML = '';
 
     if (campaigns.campaignPerformance.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No campaign data available</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No campaign data available</td></tr>';
       return;
     }
 
@@ -501,7 +520,8 @@ class AnalyticsDashboard {
     tbody.innerHTML = '';
 
     if (templates.templatePerformance.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No template data available</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No template data available</td></tr>';
       return;
     }
 
@@ -647,7 +667,8 @@ ${data.insights.recommendations.map(rec => `- ${rec.title}: ${rec.description}`)
   showError(message) {
     // Simple error notification
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+    notification.className =
+      'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
     notification.innerHTML = `
       <div class="flex">
         <div class="flex-shrink-0">

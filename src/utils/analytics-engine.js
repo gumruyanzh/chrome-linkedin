@@ -36,7 +36,7 @@ export class AnalyticsEngine {
   async calculateAnalytics(options = {}) {
     try {
       const {
-        startDate = Date.now() - (30 * 24 * 60 * 60 * 1000), // 30 days ago
+        startDate = Date.now() - 30 * 24 * 60 * 60 * 1000, // 30 days ago
         endDate = Date.now(),
         includeRealTime = false,
         groupBy = 'day',
@@ -77,7 +77,6 @@ export class AnalyticsEngine {
       }
 
       return analytics;
-
     } catch (error) {
       console.error('Error calculating analytics:', error);
       throw new Error(`Analytics calculation failed: ${error.message}`);
@@ -95,10 +94,7 @@ export class AnalyticsEngine {
       const result = await getStorageData(STORAGE_KEYS.ANALYTICS);
       const analytics = result.analytics || [];
 
-      return analytics.filter(entry =>
-        entry.timestamp >= startDate &&
-        entry.timestamp <= endDate
-      );
+      return analytics.filter(entry => entry.timestamp >= startDate && entry.timestamp <= endDate);
     } catch (error) {
       console.error('Error getting raw analytics data:', error);
       return [];
@@ -117,11 +113,10 @@ export class AnalyticsEngine {
     const messages = data.filter(entry => entry.type === ANALYTICS_TYPES.MESSAGE_SENT);
     const responses = data.filter(entry => entry.type === ANALYTICS_TYPES.MESSAGE_RECEIVED);
 
-    const acceptanceRate = connections.length > 0 ?
-      (accepted.length / connections.length) * 100 : 0;
+    const acceptanceRate =
+      connections.length > 0 ? (accepted.length / connections.length) * 100 : 0;
 
-    const responseRate = messages.length > 0 ?
-      (responses.length / messages.length) * 100 : 0;
+    const responseRate = messages.length > 0 ? (responses.length / messages.length) * 100 : 0;
 
     return {
       totalConnections: connections.length,
@@ -155,9 +150,7 @@ export class AnalyticsEngine {
       const date = new Date(parseInt(timestamp));
 
       Object.keys(ANALYTICS_TYPES).forEach(type => {
-        const count = entries.filter(entry =>
-          entry.type === ANALYTICS_TYPES[type]
-        ).length;
+        const count = entries.filter(entry => entry.type === ANALYTICS_TYPES[type]).length;
 
         series[type.toLowerCase()].push({
           timestamp: parseInt(timestamp),
@@ -181,38 +174,34 @@ export class AnalyticsEngine {
 
     // Calculate acceptance rate by time of day
     const hourlyAcceptance = Array.from({ length: 24 }, (_, hour) => {
-      const hourConnections = connections.filter(entry =>
-        new Date(entry.timestamp).getHours() === hour
+      const hourConnections = connections.filter(
+        entry => new Date(entry.timestamp).getHours() === hour
       );
-      const hourAccepted = accepted.filter(entry =>
-        new Date(entry.timestamp).getHours() === hour
-      );
+      const hourAccepted = accepted.filter(entry => new Date(entry.timestamp).getHours() === hour);
 
       return {
         hour,
         connections: hourConnections.length,
         accepted: hourAccepted.length,
-        rate: hourConnections.length > 0 ?
-          (hourAccepted.length / hourConnections.length) * 100 : 0
+        rate: hourConnections.length > 0 ? (hourAccepted.length / hourConnections.length) * 100 : 0
       };
     });
 
     // Calculate acceptance rate by day of week
     const dailyAcceptance = Array.from({ length: 7 }, (_, day) => {
-      const dayConnections = connections.filter(entry =>
-        new Date(entry.timestamp).getDay() === day
+      const dayConnections = connections.filter(
+        entry => new Date(entry.timestamp).getDay() === day
       );
-      const dayAccepted = accepted.filter(entry =>
-        new Date(entry.timestamp).getDay() === day
-      );
+      const dayAccepted = accepted.filter(entry => new Date(entry.timestamp).getDay() === day);
 
       return {
         day,
-        dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day],
+        dayName: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+          day
+        ],
         connections: dayConnections.length,
         accepted: dayAccepted.length,
-        rate: dayConnections.length > 0 ?
-          (dayAccepted.length / dayConnections.length) * 100 : 0
+        rate: dayConnections.length > 0 ? (dayAccepted.length / dayConnections.length) * 100 : 0
       };
     });
 
@@ -240,11 +229,11 @@ export class AnalyticsEngine {
     const responses = data.filter(entry => entry.type === ANALYTICS_TYPES.MESSAGE_RECEIVED);
 
     // Calculate engagement funnel
-    const viewToConnectionRate = profileViews.length > 0 ?
-      (connections.length / profileViews.length) * 100 : 0;
+    const viewToConnectionRate =
+      profileViews.length > 0 ? (connections.length / profileViews.length) * 100 : 0;
 
-    const connectionToMessageRate = connections.length > 0 ?
-      (messages.length / connections.length) * 100 : 0;
+    const connectionToMessageRate =
+      connections.length > 0 ? (messages.length / connections.length) * 100 : 0;
 
     // Calculate response time analysis
     const responseTimeAnalysis = await this.calculateResponseTimeMetrics(data);
@@ -285,10 +274,11 @@ export class AnalyticsEngine {
 
     // Calculate conversion rates between stages
     const conversionRates = stages.map((stage, index) => {
-      if (index === 0) return { ...stage, rate: 100 };
+      if (index === 0) {
+        return { ...stage, rate: 100 };
+      }
 
-      const rate = stages[0].count > 0 ?
-        (stage.count / stages[0].count) * 100 : 0;
+      const rate = stages[0].count > 0 ? (stage.count / stages[0].count) * 100 : 0;
 
       return {
         ...stage,
@@ -298,8 +288,8 @@ export class AnalyticsEngine {
 
     return {
       conversionFunnel: conversionRates,
-      totalConversionRate: connections.length > 0 ?
-        (responses.length / connections.length) * 100 : 0,
+      totalConversionRate:
+        connections.length > 0 ? (responses.length / connections.length) * 100 : 0,
       dropOffAnalysis: this.calculateDropOffAnalysis(conversionRates)
     };
   }
@@ -330,9 +320,15 @@ export class AnalyticsEngine {
       stats[templateId].usage++;
 
       // Count related metrics
-      if (entry.resultType === 'connection_sent') stats[templateId].connections++;
-      if (entry.resultType === 'connection_accepted') stats[templateId].accepted++;
-      if (entry.resultType === 'message_response') stats[templateId].responses++;
+      if (entry.resultType === 'connection_sent') {
+        stats[templateId].connections++;
+      }
+      if (entry.resultType === 'connection_accepted') {
+        stats[templateId].accepted++;
+      }
+      if (entry.resultType === 'message_response') {
+        stats[templateId].responses++;
+      }
 
       return stats;
     }, {});
@@ -340,17 +336,16 @@ export class AnalyticsEngine {
     // Calculate performance for each template
     const templatePerformance = Object.values(templateStats).map(template => ({
       ...template,
-      acceptanceRate: template.connections > 0 ?
-        (template.accepted / template.connections) * 100 : 0,
-      responseRate: template.usage > 0 ?
-        (template.responses / template.usage) * 100 : 0
+      acceptanceRate:
+        template.connections > 0 ? (template.accepted / template.connections) * 100 : 0,
+      responseRate: template.usage > 0 ? (template.responses / template.usage) * 100 : 0
     }));
 
     return {
       totalTemplates: Object.keys(templateStats).length,
       templatePerformance: templatePerformance.sort((a, b) => b.usage - a.usage),
-      bestPerformingTemplate: templatePerformance.reduce((best, current) =>
-        current.acceptanceRate > best.acceptanceRate ? current : best,
+      bestPerformingTemplate: templatePerformance.reduce(
+        (best, current) => (current.acceptanceRate > best.acceptanceRate ? current : best),
         { acceptanceRate: 0 }
       )
     };
@@ -363,7 +358,9 @@ export class AnalyticsEngine {
    */
   async calculateCampaignMetrics(data) {
     const campaignStarts = data.filter(entry => entry.type === ANALYTICS_TYPES.CAMPAIGN_STARTED);
-    const campaignCompletes = data.filter(entry => entry.type === ANALYTICS_TYPES.CAMPAIGN_COMPLETED);
+    const campaignCompletes = data.filter(
+      entry => entry.type === ANALYTICS_TYPES.CAMPAIGN_COMPLETED
+    );
 
     // Get campaign data from storage
     const campaignsResult = await getStorageData(STORAGE_KEYS.CAMPAIGNS);
@@ -371,8 +368,12 @@ export class AnalyticsEngine {
 
     const campaignStats = campaigns.map(campaign => {
       const campaignData = data.filter(entry => entry.campaignId === campaign.id);
-      const connections = campaignData.filter(entry => entry.type === ANALYTICS_TYPES.CONNECTION_SENT);
-      const accepted = campaignData.filter(entry => entry.type === ANALYTICS_TYPES.CONNECTION_ACCEPTED);
+      const connections = campaignData.filter(
+        entry => entry.type === ANALYTICS_TYPES.CONNECTION_SENT
+      );
+      const accepted = campaignData.filter(
+        entry => entry.type === ANALYTICS_TYPES.CONNECTION_ACCEPTED
+      );
 
       return {
         id: campaign.id,
@@ -380,12 +381,11 @@ export class AnalyticsEngine {
         status: campaign.status,
         connections: connections.length,
         accepted: accepted.length,
-        acceptanceRate: connections.length > 0 ?
-          (accepted.length / connections.length) * 100 : 0,
+        acceptanceRate: connections.length > 0 ? (accepted.length / connections.length) * 100 : 0,
         startDate: campaign.createdAt,
-        duration: campaign.completedAt ?
-          campaign.completedAt - campaign.createdAt :
-          Date.now() - campaign.createdAt
+        duration: campaign.completedAt
+          ? campaign.completedAt - campaign.createdAt
+          : Date.now() - campaign.createdAt
       };
     });
 
@@ -412,16 +412,21 @@ export class AnalyticsEngine {
     const accepted = data.filter(entry => entry.type === ANALYTICS_TYPES.CONNECTION_ACCEPTED);
 
     // Time-based insights
-    const recentData = data.filter(entry =>
-      entry.timestamp >= Date.now() - (7 * 24 * 60 * 60 * 1000)
+    const recentData = data.filter(
+      entry => entry.timestamp >= Date.now() - 7 * 24 * 60 * 60 * 1000
     );
-    const previousData = data.filter(entry =>
-      entry.timestamp >= Date.now() - (14 * 24 * 60 * 60 * 1000) &&
-      entry.timestamp < Date.now() - (7 * 24 * 60 * 60 * 1000)
+    const previousData = data.filter(
+      entry =>
+        entry.timestamp >= Date.now() - 14 * 24 * 60 * 60 * 1000 &&
+        entry.timestamp < Date.now() - 7 * 24 * 60 * 60 * 1000
     );
 
-    const recentConnections = recentData.filter(entry => entry.type === ANALYTICS_TYPES.CONNECTION_SENT).length;
-    const previousConnections = previousData.filter(entry => entry.type === ANALYTICS_TYPES.CONNECTION_SENT).length;
+    const recentConnections = recentData.filter(
+      entry => entry.type === ANALYTICS_TYPES.CONNECTION_SENT
+    ).length;
+    const previousConnections = previousData.filter(
+      entry => entry.type === ANALYTICS_TYPES.CONNECTION_SENT
+    ).length;
 
     if (recentConnections > previousConnections * 1.2) {
       insights.push({
@@ -442,8 +447,8 @@ export class AnalyticsEngine {
     }
 
     // Acceptance rate insights
-    const overallAcceptanceRate = connections.length > 0 ?
-      (accepted.length / connections.length) * 100 : 0;
+    const overallAcceptanceRate =
+      connections.length > 0 ? (accepted.length / connections.length) * 100 : 0;
 
     if (overallAcceptanceRate > 30) {
       insights.push({
@@ -459,7 +464,8 @@ export class AnalyticsEngine {
       });
       recommendations.push({
         title: 'Improve Message Templates',
-        description: 'Consider personalizing your connection messages or A/B testing different templates'
+        description:
+          'Consider personalizing your connection messages or A/B testing different templates'
       });
     }
 
@@ -468,8 +474,10 @@ export class AnalyticsEngine {
       recommendations,
       keyMetrics: {
         totalActivity: data.length,
-        weekOverWeekGrowth: previousConnections > 0 ?
-          ((recentConnections - previousConnections) / previousConnections) * 100 : 0,
+        weekOverWeekGrowth:
+          previousConnections > 0
+            ? ((recentConnections - previousConnections) / previousConnections) * 100
+            : 0,
         acceptanceRate: overallAcceptanceRate
       }
     };
@@ -483,7 +491,9 @@ export class AnalyticsEngine {
   }
 
   calculateDailyAverage(data) {
-    if (data.length === 0) return 0;
+    if (data.length === 0) {
+      return 0;
+    }
 
     const firstDate = Math.min(...data.map(entry => entry.timestamp));
     const lastDate = Math.max(...data.map(entry => entry.timestamp));
@@ -518,7 +528,9 @@ export class AnalyticsEngine {
           key = date.setHours(0, 0, 0, 0);
       }
 
-      if (!grouped[key]) grouped[key] = [];
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
       grouped[key].push(entry);
     });
 
@@ -529,27 +541,35 @@ export class AnalyticsEngine {
     const messages = data.filter(entry => entry.type === ANALYTICS_TYPES.MESSAGE_SENT);
     const responses = data.filter(entry => entry.type === ANALYTICS_TYPES.MESSAGE_RECEIVED);
 
-    const responseTimes = responses.map(response => {
-      const relatedMessage = messages.find(msg =>
-        msg.profileId === response.profileId &&
-        msg.timestamp < response.timestamp
-      );
+    const responseTimes = responses
+      .map(response => {
+        const relatedMessage = messages.find(
+          msg => msg.profileId === response.profileId && msg.timestamp < response.timestamp
+        );
 
-      if (relatedMessage) {
-        return response.timestamp - relatedMessage.timestamp;
-      }
-      return null;
-    }).filter(time => time !== null);
+        if (relatedMessage) {
+          return response.timestamp - relatedMessage.timestamp;
+        }
+        return null;
+      })
+      .filter(time => time !== null);
 
-    const averageResponseTime = responseTimes.length > 0 ?
-      responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length : 0;
+    const averageResponseTime =
+      responseTimes.length > 0
+        ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+        : 0;
 
     // Create distribution buckets
     const distribution = {
       '< 1 hour': responseTimes.filter(time => time < 60 * 60 * 1000).length,
-      '1-6 hours': responseTimes.filter(time => time >= 60 * 60 * 1000 && time < 6 * 60 * 60 * 1000).length,
-      '6-24 hours': responseTimes.filter(time => time >= 6 * 60 * 60 * 1000 && time < 24 * 60 * 60 * 1000).length,
-      '1-3 days': responseTimes.filter(time => time >= 24 * 60 * 60 * 1000 && time < 3 * 24 * 60 * 60 * 1000).length,
+      '1-6 hours': responseTimes.filter(time => time >= 60 * 60 * 1000 && time < 6 * 60 * 60 * 1000)
+        .length,
+      '6-24 hours': responseTimes.filter(
+        time => time >= 6 * 60 * 60 * 1000 && time < 24 * 60 * 60 * 1000
+      ).length,
+      '1-3 days': responseTimes.filter(
+        time => time >= 24 * 60 * 60 * 1000 && time < 3 * 24 * 60 * 60 * 1000
+      ).length,
       '> 3 days': responseTimes.filter(time => time >= 3 * 24 * 60 * 60 * 1000).length
     };
 
@@ -593,10 +613,14 @@ export class AnalyticsEngine {
   }
 
   calculateAverageDuration(campaigns) {
-    if (campaigns.length === 0) return 0;
+    if (campaigns.length === 0) {
+      return 0;
+    }
 
     const completedCampaigns = campaigns.filter(c => c.status === 'completed');
-    if (completedCampaigns.length === 0) return 0;
+    if (completedCampaigns.length === 0) {
+      return 0;
+    }
 
     const totalDuration = completedCampaigns.reduce((sum, campaign) => sum + campaign.duration, 0);
     return Math.round(totalDuration / completedCampaigns.length);

@@ -43,7 +43,9 @@ describe('Connection Request Automation - Task 2.2', () => {
       };
 
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Connect')) return connectButton;
+        if (selector.includes('Connect')) {
+          return connectButton;
+        }
         return null;
       });
 
@@ -109,7 +111,9 @@ describe('Connection Request Automation - Task 2.2', () => {
       };
 
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Connect')) return connectButton;
+        if (selector.includes('Connect')) {
+          return connectButton;
+        }
         return null;
       });
 
@@ -138,9 +142,15 @@ describe('Connection Request Automation - Task 2.2', () => {
       };
 
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Connect')) return connectButton;
-        if (selector.includes('Add a note')) return addNoteButton;
-        if (selector.includes('textarea')) return messageTextarea;
+        if (selector.includes('Connect')) {
+          return connectButton;
+        }
+        if (selector.includes('Add a note')) {
+          return addNoteButton;
+        }
+        if (selector.includes('textarea')) {
+          return messageTextarea;
+        }
         return null;
       });
 
@@ -208,8 +218,12 @@ describe('Connection Request Automation - Task 2.2', () => {
       let elementRequests = 0;
       global.document.querySelector = jest.fn(selector => {
         elementRequests++;
-        if (selector.includes('Add a note')) return addNoteButton;
-        if (selector.includes('textarea')) return messageTextarea;
+        if (selector.includes('Add a note')) {
+          return addNoteButton;
+        }
+        if (selector.includes('textarea')) {
+          return messageTextarea;
+        }
         return null;
       });
 
@@ -249,7 +263,9 @@ describe('Connection Request Automation - Task 2.2', () => {
       };
 
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Send')) return sendButton;
+        if (selector.includes('Send')) {
+          return sendButton;
+        }
         return null;
       });
 
@@ -297,12 +313,12 @@ describe('Connection Request Automation - Task 2.2', () => {
     test('should timeout when element does not appear', async () => {
       global.document.querySelector = jest.fn(() => null);
 
-      await expect(waitForElement('#missing-element', 100))
-        .rejects
-        .toThrow('Element #missing-element not found within 100ms');
+      await expect(waitForElement('#missing-element', 100)).rejects.toThrow(
+        'Element #missing-element not found within 100ms'
+      );
     });
 
-    test('should observe DOM changes when element not immediately found', (done) => {
+    test('should observe DOM changes when element not immediately found', done => {
       const targetElement = { id: 'test-element' };
       let callCount = 0;
 
@@ -313,7 +329,7 @@ describe('Connection Request Automation - Task 2.2', () => {
 
       // Mock MutationObserver that triggers callback
       const mockCallback = jest.fn();
-      global.MutationObserver = jest.fn().mockImplementation((callback) => {
+      global.MutationObserver = jest.fn().mockImplementation(callback => {
         setTimeout(() => {
           callback(); // Trigger the callback to simulate DOM change
         }, 10);
@@ -345,8 +361,12 @@ describe('Connection Request Automation - Task 2.2', () => {
       };
 
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Connect')) return connectButton;
-        if (selector.includes('Send')) return sendButton;
+        if (selector.includes('Connect')) {
+          return connectButton;
+        }
+        if (selector.includes('Send')) {
+          return sendButton;
+        }
         return null;
       });
 
@@ -380,10 +400,18 @@ describe('Connection Request Automation - Task 2.2', () => {
       };
 
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Connect')) return connectButton;
-        if (selector.includes('Add a note')) return addNoteButton;
-        if (selector.includes('textarea')) return messageTextarea;
-        if (selector.includes('Send')) return sendButton;
+        if (selector.includes('Connect')) {
+          return connectButton;
+        }
+        if (selector.includes('Add a note')) {
+          return addNoteButton;
+        }
+        if (selector.includes('textarea')) {
+          return messageTextarea;
+        }
+        if (selector.includes('Send')) {
+          return sendButton;
+        }
         return null;
       });
 
@@ -406,7 +434,9 @@ describe('Connection Request Automation - Task 2.2', () => {
 
       // Simulate slow response
       global.document.querySelector = jest.fn(selector => {
-        if (selector.includes('Connect')) return connectButton;
+        if (selector.includes('Connect')) {
+          return connectButton;
+        }
         return null;
       });
 
