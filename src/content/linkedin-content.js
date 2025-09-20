@@ -16,6 +16,13 @@ import { loadExtensionCSS, createFallbackCSS } from '../utils/css-loader.js';
 let isAutomationActive = false;
 let automationInterval = null;
 let rateLimitTracker = null;
+let progressState = {
+  totalProfiles: 0,
+  processedProfiles: 0,
+  currentPage: 1,
+  totalPages: 1,
+  sentRequests: 0
+};
 
 // Initialize content script
 initialize();
@@ -121,10 +128,16 @@ async function startAutomation() {
 
   isAutomationActive = true;
 
+  // Initialize progress tracking
+  await initializeProgressTracking();
+
   await trackEvent(ANALYTICS_EVENTS.AUTOMATION_STARTED, {
     url: window.location.href,
     searchCriteria: extractSearchCriteria()
   });
+
+  // Emit automation started event
+  document.dispatchEvent(new CustomEvent('automationStarted'));
 
   // Start automation loop
   automationLoop();
@@ -178,6 +191,12 @@ function stopAutomation() {
     automationInterval = null;
     console.log('Cleared automation interval/timeout');
   }
+
+  // Reset progress state
+  resetProgressState();
+
+  // Emit automation stopped event
+  document.dispatchEvent(new CustomEvent('automationStopped'));
 
   // Update the on-page controls if they exist
   updateControlsDisplay();
@@ -442,3 +461,99 @@ new MutationObserver(() => {
     }
   }
 }).observe(document, { subtree: true, childList: true });
+
+// Progress tracking functions
+async function initializeProgressTracking() {
+  try {
+    // Count total profiles on current page and estimate total pages
+    const searchResults = await processSearchResults();
+    const totalPages = estimateTotalPages();
+
+    progressState = {
+      totalProfiles: searchResults.length,
+      processedProfiles: 0,
+      currentPage: 1,
+      totalPages: totalPages,
+      sentRequests: 0
+    };
+
+    // Emit initial progress
+    emitProgressUpdate('Starting automation...', 0);
+  } catch (error) {
+    console.error('Error initializing progress tracking:', error);
+  }
+}
+
+function updateProgress(profilesProcessed, requestsSent, statusText) {
+  progressState.processedProfiles = profilesProcessed;
+  progressState.sentRequests = requestsSent;
+
+  const percentage = progressState.totalProfiles > 0
+    ? (progressState.processedProfiles / progressState.totalProfiles) * 100
+    : 0;
+
+  emitProgressUpdate(statusText, percentage);
+}
+
+function emitProgressUpdate(text, percentage) {
+  const progressData = {
+    percentage: Math.min(100, Math.max(0, percentage)),
+    text: text,
+    details: {
+      processedProfiles: progressState.processedProfiles,
+      totalProfiles: progressState.totalProfiles,
+      sentRequests: progressState.sentRequests,
+      currentPage: progressState.currentPage,
+      totalPages: progressState.totalPages
+    }
+  };
+
+  // Emit to popup
+  document.dispatchEvent(new CustomEvent('automationProgress', {
+    detail: progressData
+  }));
+
+  // Send to popup via chrome messaging
+  chrome.runtime.sendMessage({
+    type: 'PROGRESS_UPDATE',
+    data: progressData
+  }).catch(() => {
+    // Popup might be closed, that's okay
+  });
+}
+
+function resetProgressState() {
+  progressState = {
+    totalProfiles: 0,
+    processedProfiles: 0,
+    currentPage: 1,
+    totalPages: 1,
+    sentRequests: 0
+  };
+
+  emitProgressUpdate('Automation stopped', 0);
+}
+
+function estimateTotalPages() {
+  try {
+    // Look for pagination indicators
+    const paginationElements = document.querySelectorAll('[aria-label*="page"], .artdeco-pagination__pages li');
+    if (paginationElements.length > 0) {
+      // Try to find the last page number
+      const pageNumbers = Array.from(paginationElements)
+        .map(el => parseInt(el.textContent))
+        .filter(num => !isNaN(num));
+
+      if (pageNumbers.length > 0) {
+        return Math.max(...pageNumbers);
+      }
+    }
+
+    // Fallback: assume multiple pages exist if we see "Next" button
+    const nextButton = document.querySelector('[aria-label*="Next"]');
+    return nextButton ? 10 : 1; // Conservative estimate
+  } catch (error) {
+    console.warn('Could not estimate total pages:', error);
+    return 1;
+  }
+}

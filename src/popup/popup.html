@@ -6,6 +6,7 @@
   <title>LinkedIn Connection Automation</title>
   <link href="../styles/tailwind.css" rel="stylesheet">
   <link href="../assets/vintage-typography.css" rel="stylesheet">
+  <link href="../styles/progress-bar.css" rel="stylesheet">
 </head>
 <body class="w-96 bg-vintage-texture vintage-card">
   <div class="p-vintage-md">
@@ -44,12 +45,20 @@
       <!-- Progress Section (hidden by default) -->
       <div id="progress-section" class="vintage-form-group mt-vintage-md hidden">
         <div class="vintage-caption text-vintage-xs text-vintage-accent mb-1 font-newspaper">Current Progress</div>
-        <div class="bg-vintage-paper-dark rounded-vintage h-2 border border-vintage-accent border-opacity-20">
-          <div id="progress-bar" class="bg-vintage-sepia h-2 rounded-vintage transition-all duration-300 shadow-vintage-inset" style="width: 0%"></div>
+        <div class="vintage-progress-container h-3">
+          <div id="progress-bar"
+               class="vintage-progress-bar h-3 progress-bar-accessible"
+               style="width: 0%"
+               role="progressbar"
+               aria-valuemin="0"
+               aria-valuemax="100"
+               aria-valuenow="0"
+               aria-label="Automation progress">
+          </div>
         </div>
         <div class="flex justify-between vintage-fine-print text-vintage-accent mt-1">
-          <span id="progress-text">Starting...</span>
-          <span id="progress-percentage">0%</span>
+          <span id="progress-text" class="progress-text-enhanced">Starting...</span>
+          <span id="progress-percentage" class="progress-percentage-enhanced">0%</span>
         </div>
       </div>
     </section>
@@ -100,6 +109,7 @@
   </div>
 
   <script src="../components/help-system.js"></script>
+  <script src="../components/progress-bar.js"></script>
   <script type="module" src="popup.js"></script>
   <script>
     // Show welcome banner for new users

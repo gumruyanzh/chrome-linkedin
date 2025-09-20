@@ -82,14 +82,13 @@ export default defineConfig({
                 .replace('../styles/tailwind.css', 'styles/tailwind.css')
                 .replace('../icons/icon-32.png', 'icons/icon-32.png')
                 .replace('../components/help-system.js', 'components/help-system.js')
-                .replace('../assets/vintage-typography.css', 'assets/vintage-typography.css');
+                .replace('../components/progress-bar.js', 'components/progress-bar.js')
+                .replace('../assets/vintage-typography.css', 'assets/vintage-typography.css')
+                .replace('../styles/progress-bar.css', 'progress-bar.css');
             }
           }
         },
-        {
-          src: 'src/styles/tailwind.css',
-          dest: 'styles'
-        },
+        // Remove this static copy - Tailwind will be processed by Vite
         {
           src: 'src/content/styles.css',
           dest: 'content'
@@ -161,8 +160,10 @@ export default defineConfig({
         'content': resolve(__dirname, 'src/content/linkedin-content-wrapper.js'),
         'components/help-system': resolve(__dirname, 'src/components/help-system.js'),
         'components/onboarding-system': resolve(__dirname, 'src/components/onboarding-system.js'),
+        'components/progress-bar': resolve(__dirname, 'src/components/progress-bar.js'),
         'content/styles': resolve(__dirname, 'src/content/styles.css'),
         'styles/tailwind': resolve(__dirname, 'src/styles/tailwind.css'),
+        'styles/progress-bar': resolve(__dirname, 'src/styles/progress-bar.css'),
         'dashboard/dashboard': resolve(__dirname, 'src/dashboard/dashboard.js'),
         'dashboard/analytics-dashboard': resolve(__dirname, 'src/dashboard/analytics-dashboard.js'),
         'dashboard/bulk-dashboard': resolve(__dirname, 'src/dashboard/bulk-dashboard.js'),

@@ -6,6 +6,7 @@ let isAutomationActive = false;
 let helpSystem = null;
 let refreshInterval = null;
 let lastStatsUpdate = 0;
+let progressBarComponent = null;
 
 async function initializePopup() {
   try {
@@ -16,6 +17,11 @@ async function initializePopup() {
     if (typeof HelpSystem !== 'undefined') {
       helpSystem = new HelpSystem();
       helpSystem.init();
+    }
+
+    // Initialize progress bar component
+    if (typeof ProgressBarComponent !== 'undefined') {
+      progressBarComponent = new ProgressBarComponent();
     }
 
     // Load current settings with timeout
@@ -30,6 +36,9 @@ async function initializePopup() {
 
     // Setup event listeners
     setupEventListeners();
+
+    // Setup progress message listener
+    setupProgressListener();
 
     // Check if we're on LinkedIn
     await checkLinkedInTab();
@@ -147,8 +156,16 @@ async function toggleAutomation() {
       if (isAutomationActive) {
         setTimeout(updateStatsDisplay, 1000);
         startAutoRefresh();
+        // Show progress bar when automation starts
+        if (progressBarComponent) {
+          progressBarComponent.show();
+        }
       } else {
         stopAutoRefresh();
+        // Hide progress bar when automation stops
+        if (progressBarComponent) {
+          progressBarComponent.hide();
+        }
       }
     } else {
       throw new Error(response?.error || `Content script did not respond to ${actionName} request`);
@@ -280,6 +297,13 @@ function hideProgressSection() {
 function updateProgress(progressData) {
   if (!progressData) {return;}
 
+  // Use new progress bar component if available
+  if (progressBarComponent) {
+    progressBarComponent.updateProgress(progressData);
+    return;
+  }
+
+  // Fallback to legacy implementation
   const progressBar = document.getElementById('progress-bar');
   const progressText = document.getElementById('progress-text');
   const progressPercentage = document.getElementById('progress-percentage');
@@ -577,6 +601,17 @@ function withTimeout(promise, timeoutMs, errorMessage) {
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error(errorMessage)), timeoutMs))
   ]);
+}
+
+function setupProgressListener() {
+  // Listen for progress messages from content script
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === 'PROGRESS_UPDATE' && request.data) {
+      updateProgress(request.data);
+      sendResponse({ success: true });
+    }
+    return true;
+  });
 }
 
 function setElementLoading(elementId, isLoading, loadingText = 'Loading...') {
