@@ -1,0 +1,42 @@
+{
+  "SP-9CCCDFDE": {
+    "id": "SP-9CCCDFDE",
+    "name": "Progress Bar Sprint",
+    "goal": "Implement complete progress bar functionality for Chrome extension operations",
+    "start_date": "2025-09-20T11:21:52.182607",
+    "end_date": "2025-09-27T11:21:52.182608",
+    "velocity": 20,
+    "committed_points": 0,
+    "completed_points": 0,
+    "status": "Planning",
+    "stories": [],
+    "tasks": [],
+    "bugs": [],
+    "daily_burndown": {},
+    "retrospective_notes": null
+  },
+  "SP-35AB3241": {
+    "id": "SP-35AB3241",
+    "name": "Progress Bar Implementation Sprint",
+    "goal": "Implement complete progress bar functionality for Chrome extension operations",
+    "start_date": "2025-09-20T11:24:06.012557",
+    "end_date": "2025-09-27T11:24:02.108082",
+    "velocity": 20,
+    "committed_points": 5,
+    "completed_points": 0,
+    "status": "Active",
+    "stories": [
+      "US-B67EDA8E"
+    ],
+    "tasks": [
+      "T-161631F4",
+      "T-4A846274",
+      "T-8A0CC702",
+      "T-F720DB24",
+      "T-CD3EE0BA"
+    ],
+    "bugs": [],
+    "daily_burndown": {},
+    "retrospective_notes": null
+  }
+}

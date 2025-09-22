@@ -2,6 +2,18 @@
 
 Create a user story following SCRUM methodology with acceptance criteria.
 
+## ⚠️ IMPORTANT: NO IMPLEMENTATION
+
+**This command ONLY creates a story. It does NOT start any implementation.**
+
+When this command is executed:
+- ✅ Create the story in the backlog
+- ✅ Show the story ID
+- ❌ DO NOT write any code
+- ❌ DO NOT create any files
+- ❌ DO NOT offer to implement
+- ❌ DO NOT start working on it
+
 ## Usage
 
 Type `/create-story` to create a new user story.
@@ -33,6 +45,9 @@ Type `/create-story` to create a new user story.
 }
 ```
 
-## Implementation
+## Response
 
-This command uses the Xavier Framework to create a user story with automatic story point estimation by the Project Manager agent.
+After creating a story, simply confirm:
+"✅ Story STORY-XXX created successfully. Use /create-task to add tasks or /show-backlog to view."
+
+**DO NOT OFFER TO IMPLEMENT OR START WORKING ON THE STORY.**

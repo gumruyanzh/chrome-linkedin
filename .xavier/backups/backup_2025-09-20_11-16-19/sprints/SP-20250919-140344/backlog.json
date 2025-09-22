@@ -1,0 +1,62 @@
+{
+  "sprintId": "SP-20250919-140344",
+  "backlogItems": [
+    {
+      "itemId": "BUG-20250919-135745",
+      "type": "Bug",
+      "title": "UI is broken - CSS not loading properly",
+      "description": "Critical CSS loading issue affecting extension UI rendering and user experience",
+      "priority": "High",
+      "severity": "High",
+      "storyPoints": 8,
+      "status": "Sprint Backlog",
+      "assignee": null,
+      "labels": ["css", "ui", "critical", "chrome-extension"],
+      "acceptanceCriteria": [
+        "All CSS files load correctly in the extension",
+        "Extension popup displays proper styling and layout",
+        "LinkedIn page integration shows styled components",
+        "No CSS-related errors in browser console",
+        "UI matches design specifications across all supported browsers"
+      ],
+      "definition_of_done": [
+        "Bug fix is implemented and tested",
+        "CSS loading mechanism is verified and working",
+        "UI regression testing passes",
+        "Code review completed",
+        "Documentation updated if necessary"
+      ],
+      "estimatedEffort": "8 story points",
+      "dependencies": [],
+      "blockers": []
+    }
+  ],
+  "backlogSummary": {
+    "totalItems": 1,
+    "totalStoryPoints": 8,
+    "itemsByPriority": {
+      "High": 1,
+      "Medium": 0,
+      "Low": 0
+    },
+    "itemsByType": {
+      "Bug": 1,
+      "Feature": 0,
+      "Enhancement": 0,
+      "Task": 0
+    }
+  },
+  "sprintCapacity": {
+    "velocityTarget": 20,
+    "currentCommitment": 8,
+    "remainingCapacity": 12,
+    "capacityUtilization": "40%"
+  },
+  "notes": [
+    "Priority focus on CSS loading bug as it affects core user experience",
+    "Additional capacity available for 12 more story points worth of work",
+    "Auto-planning enabled - system will suggest additional backlog items to reach velocity target"
+  ],
+  "createdTimestamp": "2025-09-19T21:03:47.000Z",
+  "lastUpdated": "2025-09-19T21:03:47.000Z"
+}

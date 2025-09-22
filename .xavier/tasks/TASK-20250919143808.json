@@ -1,0 +1,196 @@
+{
+  "taskId": "TASK-20250919143808",
+  "title": "Plan and Implement Vintage UI Design Fixes",
+  "parentStoryId": "US-20250919-143342",
+  "assignedAgent": "frontend_engineer",
+  "status": "Todo",
+  "priority": "High",
+  "estimatedHours": 8,
+  "createdTimestamp": "2025-09-19T14:38:08.000Z",
+  "description": "Based on investigation findings, plan and implement comprehensive fixes to restore the full vintage UI design across all extension components",
+  "technicalDetails": {
+    "implementationAreas": [
+      "Create unified CSS architecture for vintage theme",
+      "Implement CSS-in-JS solution for dynamic styling",
+      "Configure proper font loading with fallbacks",
+      "Create vintage theme variables and mixins",
+      "Update all components to use vintage styling system",
+      "Implement proper CSS injection for content scripts",
+      "Create theme configuration module",
+      "Update manifest.json with all required CSS files",
+      "Implement CSS cascade and specificity management",
+      "Add vintage animations and transitions"
+    ],
+    "architecturalRequirements": [
+      "Modular CSS architecture with clear separation of concerns",
+      "CSS-in-JS system for component-specific styling",
+      "Font loading optimization with progressive enhancement",
+      "CSS custom properties for theme consistency",
+      "Content script CSS injection with proper isolation",
+      "Theme switching capability for future extensibility",
+      "Performance-optimized CSS delivery",
+      "Cross-browser compatibility layer"
+    ]
+  },
+  "checklist": [
+    {
+      "item": "Design unified CSS architecture with clear module boundaries",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Create CSS-in-JS solution for dynamic component styling",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Implement font loading system with performance optimization",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Create comprehensive vintage theme variables and mixins",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Refactor all UI components to use unified styling system",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Implement robust CSS injection for content scripts",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Create theme configuration module with runtime switching",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Update manifest.json with optimized CSS file declarations",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Implement CSS cascade management and specificity control",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Add vintage animations and micro-interactions",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Create comprehensive visual regression test suite",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Optimize CSS delivery for performance",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Implement accessibility compliance for vintage theme",
+      "completed": false,
+      "notes": ""
+    },
+    {
+      "item": "Validate cross-browser rendering consistency",
+      "completed": false,
+      "notes": ""
+    }
+  ],
+  "testCriteria": [
+    "All vintage fonts load and display correctly across all components",
+    "Color palette is consistently applied with proper contrast ratios",
+    "UI components match vintage design specifications exactly",
+    "No CSS conflicts with LinkedIn's native styles",
+    "Theme persists across page navigations and reloads",
+    "Styling works correctly in popup, dashboard, and content areas",
+    "Performance metrics meet requirements (< 100ms CSS load time)",
+    "Accessibility standards maintained (WCAG 2.1 AA compliance)",
+    "Cross-browser rendering is pixel-perfect across Chrome, Edge, Firefox",
+    "Visual regression tests pass with 99.5% similarity threshold",
+    "CSS bundle size optimized (< 50KB total)",
+    "No console errors or warnings related to styling"
+  ],
+  "testFirstDevelopment": {
+    "approach": "Test-driven implementation with continuous validation",
+    "steps": [
+      "Create unit tests for CSS module loading and injection",
+      "Implement visual regression tests for all UI components",
+      "Build performance tests for CSS delivery optimization",
+      "Set up accessibility testing automation",
+      "Create cross-browser compatibility test suite",
+      "Establish baseline metrics for theme consistency validation",
+      "Implement real-time CSS validation during development"
+    ]
+  },
+  "dependencies": [
+    "TASK-20250919143605"
+  ],
+  "designSpecifications": {
+    "colorPalette": {
+      "primary": "vintage-ink (#2C3E2D)",
+      "secondary": "vintage-sepia (#8B7355)",
+      "accent": "vintage-sage (#9CAF88)",
+      "highlight": "vintage-accent (#D4AF37)",
+      "background": "vintage-paper (#F7F3E9)"
+    },
+    "typography": {
+      "primary": "Crimson Text (serif)",
+      "secondary": "Playfair Display (serif)",
+      "body": "Merriweather (serif)",
+      "fallbacks": "Georgia, Times New Roman, serif"
+    },
+    "spacing": {
+      "system": "8px base unit with 1.618 golden ratio scaling",
+      "components": "Consistent padding/margin using CSS custom properties"
+    },
+    "animations": {
+      "duration": "300ms ease-in-out for interactions",
+      "effects": "Subtle fade-ins, gentle hover states, smooth transitions"
+    }
+  },
+  "tags": [
+    "ui-implementation",
+    "vintage-theme",
+    "css-architecture",
+    "frontend-development",
+    "performance-optimization",
+    "accessibility",
+    "cross-browser"
+  ],
+  "acceptanceCriteria": [
+    "Complete CSS architecture implemented with modular structure",
+    "All vintage fonts loading correctly with optimal performance",
+    "Unified theme system working across all extension components",
+    "CSS-in-JS solution functioning for dynamic styling needs",
+    "Zero CSS conflicts with LinkedIn's native styles",
+    "Theme configuration module enabling future extensibility",
+    "Performance metrics meeting or exceeding targets",
+    "Accessibility standards fully compliant (WCAG 2.1 AA)",
+    "Cross-browser rendering identical across target browsers",
+    "Visual regression test suite providing 100% coverage",
+    "CSS bundle optimized for size and delivery speed",
+    "Documentation complete for maintenance and future development"
+  ],
+  "environment": {
+    "type": "Chrome Extension Development",
+    "platform": "LinkedIn Web Application",
+    "browsers": ["Chrome", "Edge", "Firefox"],
+    "devices": ["Desktop", "Tablet", "Mobile"],
+    "testingTools": [
+      "Chrome DevTools",
+      "Lighthouse Performance Auditing",
+      "axe-core Accessibility Testing",
+      "Percy Visual Regression Testing",
+      "BrowserStack Cross-browser Testing"
+    ]
+  },
+  "notes": "This task implements the comprehensive vintage UI design system based on investigation findings. Focus on creating a maintainable, performant, and accessible CSS architecture that provides consistent vintage theming across all extension components while avoiding conflicts with LinkedIn's native styles. The implementation should serve as the foundation for future UI enhancements and theme variations."
+}

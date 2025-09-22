@@ -7,7 +7,7 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
 import os
 
@@ -128,6 +128,88 @@ class Roadmap:
     created_at: datetime = field(default_factory=datetime.now)
 
 
+# Serialization utilities for dataclass persistence
+def datetime_to_str(dt: Optional[datetime]) -> Optional[str]:
+    """Convert datetime to ISO format string"""
+    return dt.isoformat() if dt else None
+
+
+def str_to_datetime(dt_str: Optional[str]) -> Optional[datetime]:
+    """Convert ISO format string to datetime"""
+    return datetime.fromisoformat(dt_str) if dt_str else None
+
+
+def serialize_dataclass(obj: Any) -> Dict[str, Any]:
+    """Convert dataclass instance to JSON-serializable dict"""
+    data = asdict(obj)
+
+    # Convert datetime fields to strings
+    for key, value in data.items():
+        if isinstance(value, datetime):
+            data[key] = datetime_to_str(value)
+        elif isinstance(value, Enum):
+            data[key] = value.value
+
+    return data
+
+
+def deserialize_to_dataclass(data: Dict[str, Any], dataclass_type: type) -> Any:
+    """Convert dict to dataclass instance with proper type conversion"""
+    # Convert datetime strings back to datetime objects
+    datetime_fields = {
+        'created_at', 'updated_at', 'resolved_at', 'start_date', 'end_date'
+    }
+
+    for field_name in datetime_fields:
+        if field_name in data and data[field_name]:
+            data[field_name] = str_to_datetime(data[field_name])
+
+    # Handle SprintStatus enum for Sprint dataclass
+    if dataclass_type == Sprint and 'status' in data:
+        if isinstance(data['status'], str):
+            try:
+                data['status'] = SprintStatus(data['status'])
+            except ValueError:
+                # Keep as string if not a valid enum value
+                pass
+
+    return dataclass_type(**data)
+
+
+def safe_get_attr(obj: Any, attr: str, default: Any = None) -> Any:
+    """
+    Safely get attribute from either a dataclass instance or dictionary.
+    This provides compatibility between the two data representations.
+    """
+    if isinstance(obj, dict):
+        return obj.get(attr, default)
+    return getattr(obj, attr, default)
+
+
+def safe_set_attr(obj: Any, attr: str, value: Any) -> None:
+    """
+    Safely set attribute on either a dataclass instance or dictionary.
+    This provides compatibility between the two data representations.
+    """
+    if isinstance(obj, dict):
+        obj[attr] = value
+    else:
+        setattr(obj, attr, value)
+
+
+def get_sprint_status_value(sprint: Any) -> str:
+    """
+    Get sprint status value handling both SprintStatus enum and string.
+    Returns a string value that can be compared consistently.
+    """
+    status = safe_get_attr(sprint, 'status')
+    if isinstance(status, SprintStatus):
+        return status.value
+    elif isinstance(status, str):
+        return status
+    return "Planning"  # Default
+
+
 class SCRUMManager:
     """Manages SCRUM workflow with strict process enforcement"""
 
@@ -149,31 +231,56 @@ class SCRUMManager:
         # Story point scale (Fibonacci)
         self.story_point_scale = [1, 2, 3, 5, 8, 13, 21]
 
+        # Initialize data structure
+        self._initialize_data_structure()
+
         # Load existing data
         self._load_data()
 
+    def _initialize_data_structure(self):
+        """Initialize data directory structure with empty JSON files if they don't exist"""
+        data_files = ["stories", "tasks", "bugs", "sprints", "epics", "roadmaps"]
+
+        for data_type in data_files:
+            file_path = os.path.join(self.data_dir, f"{data_type}.json")
+            if not os.path.exists(file_path):
+                try:
+                    with open(file_path, 'w') as f:
+                        json.dump({}, f, indent=2)
+                    print(f"Initialized {data_type}.json")
+                except Exception as e:
+                    print(f"Warning: Could not initialize {data_type}.json: {e}")
+
     def _load_data(self):
-        """Load existing SCRUM data from disk"""
-        data_files = {
-            "stories": self.stories,
-            "tasks": self.tasks,
-            "bugs": self.bugs,
-            "sprints": self.sprints,
-            "epics": self.epics,
-            "roadmaps": self.roadmaps
+        """Load existing SCRUM data from disk with proper deserialization"""
+        data_type_map = {
+            "stories": (self.stories, UserStory),
+            "tasks": (self.tasks, Task),
+            "bugs": (self.bugs, Bug),
+            "sprints": (self.sprints, Sprint),
+            "epics": (self.epics, Epic),
+            "roadmaps": (self.roadmaps, Roadmap)
         }
 
-        for data_type, storage in data_files.items():
+        for data_type, (storage, dataclass_type) in data_type_map.items():
             file_path = os.path.join(self.data_dir, f"{data_type}.json")
             if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
-                    data = json.load(f)
-                    # Convert back to dataclass instances
-                    # Note: In production, use proper serialization
-                    storage.update(data)
+                try:
+                    with open(file_path, 'r') as f:
+                        data = json.load(f)
+                        # Convert dictionaries to dataclass instances
+                        for key, value in data.items():
+                            try:
+                                storage[key] = deserialize_to_dataclass(value, dataclass_type)
+                            except Exception as e:
+                                print(f"Warning: Failed to deserialize {data_type} {key}: {e}")
+                                # Fall back to dict for backward compatibility
+                                storage[key] = value
+                except Exception as e:
+                    print(f"Error loading {data_type}: {e}")
 
     def _save_data(self):
-        """Save SCRUM data to disk"""
+        """Save SCRUM data to disk with proper serialization"""
         data_files = {
             "stories": self.stories,
             "tasks": self.tasks,
@@ -185,15 +292,45 @@ class SCRUMManager:
 
         for data_type, storage in data_files.items():
             file_path = os.path.join(self.data_dir, f"{data_type}.json")
-            # Note: In production, use proper serialization for dataclasses
-            # with open(file_path, 'w') as f:
-            #     json.dump(storage, f, indent=2, default=str)
+            try:
+                serializable_data = {}
+                for key, obj in storage.items():
+                    # Handle both dataclass instances and dicts (for backward compatibility)
+                    if hasattr(obj, '__dataclass_fields__'):
+                        # It's a dataclass instance
+                        serializable_data[key] = serialize_dataclass(obj)
+                    else:
+                        # It's already a dict (backward compatibility)
+                        serializable_data[key] = obj
+
+                with open(file_path, 'w') as f:
+                    json.dump(serializable_data, f, indent=2, default=str)
+            except Exception as e:
+                print(f"Error saving {data_type}: {e}")
+
+    def _generate_unique_story_id(self) -> str:
+        """Generate a unique story ID, regenerating if it already exists"""
+        max_attempts = 100  # Prevent infinite loop
+        attempts = 0
+
+        while attempts < max_attempts:
+            story_id = f"US-{uuid.uuid4().hex[:8].upper()}"
+            if story_id not in self.stories:
+                return story_id
+            attempts += 1
+
+        # Fallback if UUID collision persists (extremely unlikely)
+        counter = 1
+        while f"US-FALLBACK-{counter:03d}" in self.stories:
+            counter += 1
+        return f"US-FALLBACK-{counter:03d}"
 
     def create_story(self, title: str, as_a: str, i_want: str, so_that: str,
                     acceptance_criteria: List[str], priority: str = "Medium",
                     epic_id: Optional[str] = None) -> UserStory:
         """Create a user story following standard format"""
-        story_id = f"US-{uuid.uuid4().hex[:8].upper()}"
+        # Generate unique story ID
+        story_id = self._generate_unique_story_id()
 
         story = UserStory(
             id=story_id,
@@ -345,12 +482,13 @@ class SCRUMManager:
             raise ValueError(f"Points must be in Fibonacci scale: {self.story_point_scale}")
 
         story = self.stories[story_id]
-        story.story_points = points
-        story.updated_at = datetime.now()
+        safe_set_attr(story, 'story_points', points)
+        safe_set_attr(story, 'updated_at', datetime.now())
 
         # Update epic total if part of one
-        if story.epic_id and story.epic_id in self.epics:
-            self._update_epic_points(story.epic_id)
+        epic_id = safe_get_attr(story, 'epic_id')
+        if epic_id and epic_id in self.epics:
+            self._update_epic_points(epic_id)
 
         self._save_data()
         return story
@@ -361,15 +499,17 @@ class SCRUMManager:
         total_points = 0
         completed_points = 0
 
-        for story_id in epic.stories:
+        epic_stories = safe_get_attr(epic, 'stories', [])
+        for story_id in epic_stories:
             if story_id in self.stories:
                 story = self.stories[story_id]
-                total_points += story.story_points
-                if story.status == "Done":
-                    completed_points += story.story_points
+                story_points = safe_get_attr(story, 'story_points', 0)
+                total_points += story_points
+                if safe_get_attr(story, 'status') == "Done":
+                    completed_points += story_points
 
-        epic.total_points = total_points
-        epic.completed_points = completed_points
+        safe_set_attr(epic, 'total_points', total_points)
+        safe_set_attr(epic, 'completed_points', completed_points)
 
     def create_sprint(self, name: str, goal: str, duration_days: int = 14) -> Sprint:
         """Create a new sprint"""
@@ -391,18 +531,31 @@ class SCRUMManager:
 
     def _calculate_velocity(self) -> int:
         """Calculate team velocity based on past sprints"""
-        completed_sprints = [s for s in self.sprints.values()
-                           if s.status == SprintStatus.COMPLETED]
+        completed_sprints = []
+        for s in self.sprints.values():
+            sprint_status = safe_get_attr(s, 'status')
+            # Handle both SprintStatus enum and string values
+            if isinstance(sprint_status, SprintStatus):
+                if sprint_status == SprintStatus.COMPLETED:
+                    completed_sprints.append(s)
+            elif sprint_status == "Completed":
+                completed_sprints.append(s)
 
         if not completed_sprints:
             return 20  # Default velocity
 
         # Average of last 3 sprints
+        def get_end_date(sprint):
+            end_date = safe_get_attr(sprint, 'end_date', datetime.now())
+            if isinstance(end_date, str):
+                return str_to_datetime(end_date) or datetime.now()
+            return end_date
+
         recent_sprints = sorted(completed_sprints,
-                              key=lambda s: s.end_date,
+                              key=get_end_date,
                               reverse=True)[:3]
 
-        total_points = sum(s.completed_points for s in recent_sprints)
+        total_points = sum(safe_get_attr(s, 'completed_points', 0) for s in recent_sprints)
         return int(total_points / len(recent_sprints))
 
     def plan_sprint(self, sprint_id: str) -> Tuple[List[str], List[str], List[str]]:
@@ -414,53 +567,72 @@ class SCRUMManager:
 
         # Get all available items
         available_stories = [s for s in self.stories.values()
-                           if s.status == "Backlog"]
+                           if safe_get_attr(s, 'status') == "Backlog"]
         available_tasks = [t for t in self.tasks.values()
-                         if t.status == "Backlog" and t.story_id not in sprint.stories]
+                         if safe_get_attr(t, 'status') == "Backlog" and
+                         safe_get_attr(t, 'story_id') not in safe_get_attr(sprint, 'stories', [])]
         available_bugs = [b for b in self.bugs.values()
-                        if b.status == "Open"]
+                        if safe_get_attr(b, 'status') == "Open"]
 
         # Sort by priority
         priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
 
-        available_stories.sort(key=lambda s: (priority_order.get(s.priority, 3), -s.story_points))
-        available_bugs.sort(key=lambda b: (priority_order.get(b.priority, 3), b.severity))
-        available_tasks.sort(key=lambda t: priority_order.get(t.priority, 3))
+        available_stories.sort(key=lambda s: (
+            priority_order.get(safe_get_attr(s, 'priority', 'Medium'), 3),
+            -safe_get_attr(s, 'story_points', 0)
+        ))
+        available_bugs.sort(key=lambda b: (
+            priority_order.get(safe_get_attr(b, 'priority', 'Medium'), 3),
+            safe_get_attr(b, 'severity', 'Low')
+        ))
+        available_tasks.sort(key=lambda t: priority_order.get(safe_get_attr(t, 'priority', 'Medium'), 3))
 
         # Add items to sprint up to velocity
         total_points = 0
         selected_stories = []
         selected_tasks = []
         selected_bugs = []
+        sprint_velocity = safe_get_attr(sprint, 'velocity', 20)
 
         # First add critical bugs
         for bug in available_bugs:
-            if bug.severity == "Critical" and total_points + bug.story_points <= sprint.velocity:
-                selected_bugs.append(bug.id)
-                total_points += bug.story_points
+            bug_severity = safe_get_attr(bug, 'severity', 'Low')
+            bug_points = safe_get_attr(bug, 'story_points', 0)
+            bug_id = safe_get_attr(bug, 'id')
+
+            if bug_severity == "Critical" and total_points + bug_points <= sprint_velocity:
+                selected_bugs.append(bug_id)
+                total_points += bug_points
 
         # Then add stories
         for story in available_stories:
-            if story.story_points > 0 and total_points + story.story_points <= sprint.velocity:
-                selected_stories.append(story.id)
-                total_points += story.story_points
+            story_points = safe_get_attr(story, 'story_points', 0)
+            story_id = safe_get_attr(story, 'id')
+
+            if story_points > 0 and total_points + story_points <= sprint_velocity:
+                selected_stories.append(story_id)
+                total_points += story_points
 
                 # Add related tasks
-                for task_id in story.tasks:
+                story_tasks = safe_get_attr(story, 'tasks', [])
+                for task_id in story_tasks:
                     if task_id in self.tasks:
                         selected_tasks.append(task_id)
 
         # Add remaining bugs if capacity allows
         for bug in available_bugs:
-            if bug.id not in selected_bugs and total_points + bug.story_points <= sprint.velocity:
-                selected_bugs.append(bug.id)
-                total_points += bug.story_points
+            bug_id = safe_get_attr(bug, 'id')
+            bug_points = safe_get_attr(bug, 'story_points', 0)
+
+            if bug_id not in selected_bugs and total_points + bug_points <= sprint_velocity:
+                selected_bugs.append(bug_id)
+                total_points += bug_points
 
         # Update sprint
-        sprint.stories = selected_stories
-        sprint.tasks = selected_tasks
-        sprint.bugs = selected_bugs
-        sprint.committed_points = total_points
+        safe_set_attr(sprint, 'stories', selected_stories)
+        safe_set_attr(sprint, 'tasks', selected_tasks)
+        safe_set_attr(sprint, 'bugs', selected_bugs)
+        safe_set_attr(sprint, 'committed_points', total_points)
 
         self._save_data()
         return selected_stories, selected_tasks, selected_bugs
@@ -475,25 +647,28 @@ class SCRUMManager:
 
         sprint = self.sprints[sprint_id]
 
-        if sprint.committed_points == 0:
+        if safe_get_attr(sprint, 'committed_points', 0) == 0:
             raise ValueError("Sprint has no committed work")
 
-        sprint.status = SprintStatus.ACTIVE
-        sprint.start_date = datetime.now()
+        safe_set_attr(sprint, 'status', SprintStatus.ACTIVE)
+        safe_set_attr(sprint, 'start_date', datetime.now())
         self.current_sprint = sprint_id
 
         # Update status of sprint items
-        for story_id in sprint.stories:
+        sprint_stories = safe_get_attr(sprint, 'stories', [])
+        for story_id in sprint_stories:
             if story_id in self.stories:
-                self.stories[story_id].status = "In Progress"
+                safe_set_attr(self.stories[story_id], 'status', "In Progress")
 
-        for task_id in sprint.tasks:
+        sprint_tasks = safe_get_attr(sprint, 'tasks', [])
+        for task_id in sprint_tasks:
             if task_id in self.tasks:
-                self.tasks[task_id].status = "In Progress"
+                safe_set_attr(self.tasks[task_id], 'status', "In Progress")
 
-        for bug_id in sprint.bugs:
+        sprint_bugs = safe_get_attr(sprint, 'bugs', [])
+        for bug_id in sprint_bugs:
             if bug_id in self.bugs:
-                self.bugs[bug_id].status = "In Progress"
+                safe_set_attr(self.bugs[bug_id], 'status', "In Progress")
 
         self._save_data()
         return True
@@ -513,14 +688,16 @@ class SCRUMManager:
         if completion_percentage == 100 and test_coverage < 100:
             raise ValueError("Test coverage must be 100% for completed tasks")
 
-        task.completion_percentage = completion_percentage
-        task.test_coverage = test_coverage
+        safe_set_attr(task, 'completion_percentage', completion_percentage)
+        safe_set_attr(task, 'test_coverage', test_coverage)
 
         if completion_percentage == 100:
-            task.status = "Done"
-            self._update_story_progress(task.story_id)
+            safe_set_attr(task, 'status', "Done")
+            story_id = safe_get_attr(task, 'story_id')
+            if story_id:
+                self._update_story_progress(story_id)
 
-        task.updated_at = datetime.now()
+        safe_set_attr(task, 'updated_at', datetime.now())
         self._save_data()
         return task
 
@@ -530,15 +707,16 @@ class SCRUMManager:
             return
 
         story = self.stories[story_id]
+        story_tasks = safe_get_attr(story, 'tasks', [])
         all_tasks_done = all(
-            self.tasks[task_id].status == "Done"
-            for task_id in story.tasks
+            safe_get_attr(self.tasks[task_id], 'status') == "Done"
+            for task_id in story_tasks
             if task_id in self.tasks
         )
 
         if all_tasks_done:
-            story.status = "Done"
-            story.updated_at = datetime.now()
+            safe_set_attr(story, 'status', "Done")
+            safe_set_attr(story, 'updated_at', datetime.now())
 
             # Update sprint progress
             if self.current_sprint:
@@ -554,18 +732,28 @@ class SCRUMManager:
         # Calculate remaining points
         remaining_points = 0
 
-        for story_id in sprint.stories:
-            if story_id in self.stories and self.stories[story_id].status != "Done":
-                remaining_points += self.stories[story_id].story_points
+        sprint_stories = safe_get_attr(sprint, 'stories', [])
+        for story_id in sprint_stories:
+            if story_id in self.stories:
+                story = self.stories[story_id]
+                if safe_get_attr(story, 'status') != "Done":
+                    remaining_points += safe_get_attr(story, 'story_points', 0)
 
-        for bug_id in sprint.bugs:
-            if bug_id in self.bugs and self.bugs[bug_id].status != "Resolved":
-                remaining_points += self.bugs[bug_id].story_points
+        sprint_bugs = safe_get_attr(sprint, 'bugs', [])
+        for bug_id in sprint_bugs:
+            if bug_id in self.bugs:
+                bug = self.bugs[bug_id]
+                if safe_get_attr(bug, 'status') != "Resolved":
+                    remaining_points += safe_get_attr(bug, 'story_points', 0)
 
         # Update daily burndown
         today = datetime.now().date().isoformat()
-        sprint.daily_burndown[today] = remaining_points
-        sprint.completed_points = sprint.committed_points - remaining_points
+        burndown = safe_get_attr(sprint, 'daily_burndown', {})
+        burndown[today] = remaining_points
+        safe_set_attr(sprint, 'daily_burndown', burndown)
+
+        committed = safe_get_attr(sprint, 'committed_points', 0)
+        safe_set_attr(sprint, 'completed_points', committed - remaining_points)
 
     def complete_sprint(self, sprint_id: str, retrospective_notes: str) -> Sprint:
         """Complete a sprint with retrospective"""
@@ -574,43 +762,74 @@ class SCRUMManager:
 
         sprint = self.sprints[sprint_id]
 
-        if sprint.status != SprintStatus.ACTIVE:
+        # Check sprint status - handle both enum and string
+        sprint_status = safe_get_attr(sprint, 'status')
+        is_active = False
+        if isinstance(sprint_status, SprintStatus):
+            is_active = sprint_status == SprintStatus.ACTIVE
+        else:
+            is_active = sprint_status == "Active"
+
+        if not is_active:
             raise ValueError("Can only complete active sprints")
 
-        sprint.status = SprintStatus.COMPLETED
-        sprint.end_date = datetime.now()
-        sprint.retrospective_notes = retrospective_notes
+        safe_set_attr(sprint, 'status', SprintStatus.COMPLETED)
+        safe_set_attr(sprint, 'end_date', datetime.now())
+        safe_set_attr(sprint, 'retrospective_notes', retrospective_notes)
 
         # Move incomplete items back to backlog
-        for story_id in sprint.stories:
-            if story_id in self.stories and self.stories[story_id].status != "Done":
-                self.stories[story_id].status = "Backlog"
+        sprint_stories = safe_get_attr(sprint, 'stories', [])
+        for story_id in sprint_stories:
+            if story_id in self.stories:
+                story = self.stories[story_id]
+                if safe_get_attr(story, 'status') != "Done":
+                    safe_set_attr(story, 'status', "Backlog")
 
-        for task_id in sprint.tasks:
-            if task_id in self.tasks and self.tasks[task_id].status != "Done":
-                self.tasks[task_id].status = "Backlog"
+        sprint_tasks = safe_get_attr(sprint, 'tasks', [])
+        for task_id in sprint_tasks:
+            if task_id in self.tasks:
+                task = self.tasks[task_id]
+                if safe_get_attr(task, 'status') != "Done":
+                    safe_set_attr(task, 'status', "Backlog")
 
-        for bug_id in sprint.bugs:
-            if bug_id in self.bugs and self.bugs[bug_id].status != "Resolved":
-                self.bugs[bug_id].status = "Open"
+        sprint_bugs = safe_get_attr(sprint, 'bugs', [])
+        for bug_id in sprint_bugs:
+            if bug_id in self.bugs:
+                bug = self.bugs[bug_id]
+                if safe_get_attr(bug, 'status') != "Resolved":
+                    safe_set_attr(bug, 'status', "Open")
 
         self.current_sprint = None
         self._save_data()
         return sprint
 
+    def get_unestimated_stories(self) -> List[UserStory]:
+        """Get all backlog stories that haven't been estimated"""
+        return [
+            s for s in self.stories.values()
+            if safe_get_attr(s, 'status') == "Backlog" and safe_get_attr(s, 'story_points', 0) == 0
+        ]
+
     def get_backlog_report(self) -> Dict[str, Any]:
         """Generate backlog report with metrics"""
-        total_stories = len([s for s in self.stories.values() if s.status == "Backlog"])
-        total_bugs = len([b for b in self.bugs.values() if b.status == "Open"])
-        total_points = sum(s.story_points for s in self.stories.values() if s.status == "Backlog")
+        total_stories = len([s for s in self.stories.values() if safe_get_attr(s, 'status') == "Backlog"])
+        total_bugs = len([b for b in self.bugs.values() if safe_get_attr(b, 'status') == "Open"])
+        total_points = sum(
+            safe_get_attr(s, 'story_points', 0)
+            for s in self.stories.values()
+            if safe_get_attr(s, 'status') == "Backlog"
+        )
+        unestimated_count = len(self.get_unestimated_stories())
 
         return {
             "total_stories": total_stories,
             "total_bugs": total_bugs,
             "total_points": total_points,
+            "unestimated_stories": unestimated_count,
             "estimated_sprints": total_points / self._calculate_velocity() if total_points > 0 else 0,
             "critical_bugs": len([b for b in self.bugs.values()
-                                if b.status == "Open" and b.severity == "Critical"])
+                                if safe_get_attr(b, 'status') == "Open" and
+                                safe_get_attr(b, 'severity') == "Critical"])
         }
 
     def get_sprint_report(self, sprint_id: str) -> Dict[str, Any]:

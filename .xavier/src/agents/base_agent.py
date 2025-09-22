@@ -11,6 +11,13 @@ from dataclasses import dataclass
 import logging
 import re
 import ast
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.ansi_art import AgentColors, ANSIColors, display_agent_takeover, display_agent_status, display_agent_result, display_agent_handoff, AgentBoxDrawing
+from agents.agent_metadata import get_agent_metadata, get_agent_display_name
 
 
 @dataclass
@@ -54,7 +61,11 @@ class BaseAgent(ABC):
     def __init__(self, name: str, capabilities: AgentCapability):
         self.name = name
         self.capabilities = capabilities
-        self.logger = logging.getLogger(f"Xavier.Agent.{name}")
+
+        # Get display name from metadata or fallback to formatted name
+        self.display_name = get_agent_display_name(name)
+
+        self.logger = logging.getLogger(f"Xavier.Agent.{self.display_name}")
         self.current_task: Optional[AgentTask] = None
 
     @abstractmethod
@@ -78,6 +89,30 @@ class BaseAgent(ABC):
         """Check if action is permitted for this agent"""
         return action not in self.capabilities.restricted_actions
 
+    def start_task(self, task: AgentTask) -> None:
+        """Start working on a task with colored output"""
+        self.current_task = task
+        display_agent_takeover(self.name, task.description)
+        display_agent_status(self.name, "Working", f"Task: {task.task_id}")
+
+    def update_status(self, status: str, details: Optional[str] = None) -> None:
+        """Update agent status with colored output"""
+        display_agent_status(self.name, status, details)
+
+    def show_thinking(self, message: str = "Processing...") -> None:
+        """Display thinking indicator"""
+        thinking_line = AgentBoxDrawing.create_thinking_indicator(self.name, message)
+        print(thinking_line)
+
+    def handoff_to(self, target_agent: str, reason: str) -> None:
+        """Display handoff to another agent"""
+        display_agent_handoff(self.name, target_agent, reason)
+
+    def complete_task(self, success: bool, summary: str) -> None:
+        """Complete current task with colored result display"""
+        display_agent_result(self.name, success, summary)
+        self.current_task = None
+
 
 class ProjectManagerAgent(BaseAgent):
     """Project Manager - Handles sprint planning and task assignment"""
@@ -90,7 +125,7 @@ class ProjectManagerAgent(BaseAgent):
             restricted_actions=["code_write", "code_execute", "deploy"],
             allowed_file_patterns=[r".*\.md$", r".*\.json$", r".*\.yaml$"]
         )
-        super().__init__("ProjectManager", capabilities)
+        super().__init__("project-manager", capabilities)
         self.story_points_model = self._initialize_estimation_model()
 
     def _initialize_estimation_model(self) -> Dict[str, int]:
@@ -106,14 +141,16 @@ class ProjectManagerAgent(BaseAgent):
 
     def execute_task(self, task: AgentTask) -> AgentResult:
         """Execute project management tasks"""
+        self.start_task(task)
+
         if task.task_type == "estimate_story":
-            return self._estimate_story_points(task)
+            result = self._estimate_story_points(task)
         elif task.task_type == "plan_sprint":
-            return self._plan_sprint(task)
+            result = self._plan_sprint(task)
         elif task.task_type == "assign_tasks":
-            return self._assign_tasks(task)
+            result = self._assign_tasks(task)
         else:
-            return AgentResult(
+            result = AgentResult(
                 success=False,
                 task_id=task.task_id,
                 output="",
@@ -124,6 +161,9 @@ class ProjectManagerAgent(BaseAgent):
                 errors=[f"Unknown task type: {task.task_type}"]
             )
 
+        self.complete_task(result.success, result.output[:100] if result.output else "Task completed")
+        return result
+
     def validate_task(self, task: AgentTask) -> Tuple[bool, List[str]]:
         """Validate project management task"""
         valid_types = ["estimate_story", "plan_sprint", "assign_tasks", "create_roadmap"]
@@ -132,32 +172,102 @@ class ProjectManagerAgent(BaseAgent):
         return True, []
 
     def _estimate_story_points(self, task: AgentTask) -> AgentResult:
-        """Estimate story points based on complexity analysis"""
-        complexity_factors = {
-            "lines_of_code": 0,
-            "dependencies": 0,
-            "integration_points": 0,
-            "test_complexity": 0,
-            "ui_complexity": 0
+        """Estimate story points based on comprehensive complexity analysis"""
+        # Initialize complexity score
+        complexity_score = 0
+        analysis_details = []
+
+        # Combine description and requirements for analysis
+        full_context = f"{task.description} {' '.join(task.requirements)}".lower()
+
+        # 1. Analyze technical complexity keywords
+        technical_keywords = {
+            "api": 2, "database": 2, "authentication": 3, "authorization": 3,
+            "integration": 3, "microservice": 4, "distributed": 4,
+            "real-time": 3, "websocket": 3, "encryption": 3,
+            "payment": 4, "third-party": 2, "migration": 3,
+            "refactor": 2, "optimization": 3, "performance": 3,
+            "security": 3, "compliance": 4, "audit": 3
         }
 
-        # Analyze requirements for complexity
-        description = task.description.lower()
-        if "simple" in description or "basic" in description:
-            estimated_points = self.story_points_model["simple"]
-        elif "complex" in description or "advanced" in description:
-            estimated_points = self.story_points_model["complex"]
+        for keyword, weight in technical_keywords.items():
+            if keyword in full_context:
+                complexity_score += weight
+                analysis_details.append(f"Contains {keyword} (+{weight})")
+
+        # 2. Analyze CRUD operations
+        crud_operations = ["create", "read", "update", "delete", "list", "search"]
+        crud_count = sum(1 for op in crud_operations if op in full_context)
+        if crud_count > 0:
+            complexity_score += crud_count
+            analysis_details.append(f"CRUD operations: {crud_count} (+{crud_count})")
+
+        # 3. Analyze acceptance criteria count
+        criteria_count = len(task.requirements)
+        if criteria_count > 5:
+            complexity_score += 3
+            analysis_details.append(f"Many acceptance criteria: {criteria_count} (+3)")
+        elif criteria_count > 3:
+            complexity_score += 2
+            analysis_details.append(f"Multiple criteria: {criteria_count} (+2)")
         else:
-            estimated_points = self.story_points_model["moderate"]
+            complexity_score += 1
+            analysis_details.append(f"Few criteria: {criteria_count} (+1)")
+
+        # 4. Analyze UI/UX complexity
+        ui_keywords = ["ui", "ux", "design", "responsive", "mobile", "accessibility",
+                      "animation", "dashboard", "visualization", "chart", "graph"]
+        ui_complexity = sum(1 for kw in ui_keywords if kw in full_context)
+        if ui_complexity > 0:
+            complexity_score += ui_complexity * 2
+            analysis_details.append(f"UI complexity (+{ui_complexity * 2})")
+
+        # 5. Analyze testing requirements
+        test_keywords = ["test", "coverage", "unit", "integration", "e2e", "tdd"]
+        test_complexity = sum(1 for kw in test_keywords if kw in full_context)
+        if test_complexity > 0:
+            complexity_score += test_complexity
+            analysis_details.append(f"Testing requirements (+{test_complexity})")
+
+        # 6. Check for simple/complex indicators
+        if any(word in full_context for word in ["simple", "basic", "straightforward"]):
+            complexity_score = max(1, complexity_score - 2)
+            analysis_details.append("Simple indicator (-2)")
+        elif any(word in full_context for word in ["complex", "advanced", "sophisticated"]):
+            complexity_score += 3
+            analysis_details.append("Complex indicator (+3)")
+
+        # Map complexity score to story points (Fibonacci)
+        if complexity_score <= 3:
+            estimated_points = 1
+        elif complexity_score <= 5:
+            estimated_points = 2
+        elif complexity_score <= 8:
+            estimated_points = 3
+        elif complexity_score <= 12:
+            estimated_points = 5
+        elif complexity_score <= 18:
+            estimated_points = 8
+        elif complexity_score <= 26:
+            estimated_points = 13
+        else:
+            estimated_points = 21
+
+        # Update status with analysis
+        self.update_status("Analyzing", f"Complexity score: {complexity_score} → {estimated_points} points")
 
         return AgentResult(
             success=True,
             task_id=task.task_id,
-            output=f"Estimated story points: {estimated_points}",
+            output=f"Estimated {estimated_points} story points (complexity: {complexity_score})",
             test_results=None,
             files_created=[],
             files_modified=[],
-            validation_results={"story_points": estimated_points},
+            validation_results={
+                "story_points": estimated_points,
+                "complexity_score": complexity_score,
+                "analysis": analysis_details
+            },
             errors=[]
         )
 
@@ -201,19 +311,21 @@ class ContextManagerAgent(BaseAgent):
             restricted_actions=["code_write", "deploy"],
             allowed_file_patterns=[r".*"]  # Can read all files
         )
-        super().__init__("ContextManager", capabilities)
+        super().__init__("context-manager", capabilities)
         self.codebase_map: Dict[str, Any] = {}
 
     def execute_task(self, task: AgentTask) -> AgentResult:
         """Execute context management tasks"""
+        self.start_task(task)
+
         if task.task_type == "analyze_codebase":
-            return self._analyze_codebase(task)
+            result = self._analyze_codebase(task)
         elif task.task_type == "find_implementations":
-            return self._find_implementations(task)
+            result = self._find_implementations(task)
         elif task.task_type == "check_dependencies":
-            return self._check_dependencies(task)
+            result = self._check_dependencies(task)
         else:
-            return AgentResult(
+            result = AgentResult(
                 success=False,
                 task_id=task.task_id,
                 output="",
@@ -223,6 +335,9 @@ class ContextManagerAgent(BaseAgent):
                 validation_results={},
                 errors=[f"Unknown task type: {task.task_type}"]
             )
+
+        self.complete_task(result.success, result.output[:100] if result.output else "Analysis completed")
+        return result
 
     def validate_task(self, task: AgentTask) -> Tuple[bool, List[str]]:
         """Validate context management task"""
@@ -285,13 +400,15 @@ class PythonEngineerAgent(BaseAgent):
             restricted_actions=["frontend_development", "golang_code", "javascript_code"],
             allowed_file_patterns=[r".*\.py$", r".*requirements.*\.txt$", r".*\.toml$"]
         )
-        super().__init__("PythonEngineer", capabilities)
+        super().__init__("python-engineer", capabilities)
 
     def execute_task(self, task: AgentTask) -> AgentResult:
         """Execute Python development tasks with test-first approach"""
+        self.start_task(task)
+
         # Validate language constraint
         if not self._validate_python_only(task):
-            return AgentResult(
+            result = AgentResult(
                 success=False,
                 task_id=task.task_id,
                 output="",
@@ -301,18 +418,26 @@ class PythonEngineerAgent(BaseAgent):
                 validation_results={},
                 errors=["Task requires non-Python code. Python Engineer can only write Python."]
             )
+            self.complete_task(False, "Task requires non-Python code")
+            return result
 
         # Test-first enforcement
         if task.task_type == "implement_feature":
+            self.update_status("Testing", "Writing tests first (TDD)")
             # Write tests first
             test_result = self._write_tests_first(task)
             if not test_result.success:
+                self.complete_task(False, "Failed to write tests")
                 return test_result
 
+            self.update_status("Working", "Implementing feature")
             # Then implement
-            return self._implement_python_feature(task)
+            result = self._implement_python_feature(task)
+        else:
+            result = self._execute_python_task(task)
 
-        return self._execute_python_task(task)
+        self.complete_task(result.success, result.output[:100] if result.output else "Python task completed")
+        return result
 
     def validate_task(self, task: AgentTask) -> Tuple[bool, List[str]]:
         """Validate Python-only constraint"""
@@ -426,13 +551,15 @@ class GolangEngineerAgent(BaseAgent):
             restricted_actions=["python_code", "javascript_code", "frontend_development"],
             allowed_file_patterns=[r".*\.go$", r"go\.mod$", r"go\.sum$"]
         )
-        super().__init__("GolangEngineer", capabilities)
+        super().__init__("golang-engineer", capabilities)
 
     def execute_task(self, task: AgentTask) -> AgentResult:
         """Execute Go development tasks with test-first approach"""
+        self.start_task(task)
+
         # Validate language constraint
         if not self._validate_golang_only(task):
-            return AgentResult(
+            result = AgentResult(
                 success=False,
                 task_id=task.task_id,
                 output="",
@@ -442,18 +569,26 @@ class GolangEngineerAgent(BaseAgent):
                 validation_results={},
                 errors=["Task requires non-Go code. Golang Engineer can only write Go."]
             )
+            self.complete_task(False, "Task requires non-Go code")
+            return result
 
         # Test-first enforcement
         if task.task_type == "implement_feature":
+            self.update_status("Testing", "Writing Go tests first (TDD)")
             # Write tests first
             test_result = self._write_tests_first(task)
             if not test_result.success:
+                self.complete_task(False, "Failed to write tests")
                 return test_result
 
+            self.update_status("Working", "Implementing Go feature")
             # Then implement
-            return self._implement_go_feature(task)
+            result = self._implement_go_feature(task)
+        else:
+            result = self._execute_go_task(task)
 
-        return self._execute_go_task(task)
+        self.complete_task(result.success, result.output[:100] if result.output else "Go task completed")
+        return result
 
     def validate_task(self, task: AgentTask) -> Tuple[bool, List[str]]:
         """Validate Go-only constraint"""
@@ -564,13 +699,15 @@ class FrontendEngineerAgent(BaseAgent):
             restricted_actions=["backend_development", "database_operations"],
             allowed_file_patterns=[r".*\.[tj]sx?$", r".*\.vue$", r".*\.css$", r".*\.scss$"]
         )
-        super().__init__("FrontendEngineer", capabilities)
+        super().__init__("frontend-engineer", capabilities)
 
     def execute_task(self, task: AgentTask) -> AgentResult:
         """Execute frontend tasks with test-first approach"""
+        self.start_task(task)
+
         # Ensure TypeScript usage
         if not self._enforce_typescript(task):
-            return AgentResult(
+            result = AgentResult(
                 success=False,
                 task_id=task.task_id,
                 output="",
@@ -580,17 +717,25 @@ class FrontendEngineerAgent(BaseAgent):
                 validation_results={},
                 errors=["Frontend must use TypeScript for type safety"]
             )
+            self.complete_task(False, "TypeScript not enforced")
+            return result
 
         if task.task_type == "implement_component":
+            self.update_status("Testing", "Writing component tests first")
             # Write component tests first
             test_result = self._write_component_tests_first(task)
             if not test_result.success:
+                self.complete_task(False, "Failed to write component tests")
                 return test_result
 
+            self.update_status("Working", "Implementing React component")
             # Then implement component
-            return self._implement_component(task)
+            result = self._implement_component(task)
+        else:
+            result = self._execute_frontend_task(task)
 
-        return self._execute_frontend_task(task)
+        self.complete_task(result.success, result.output[:100] if result.output else "Frontend task completed")
+        return result
 
     def validate_task(self, task: AgentTask) -> Tuple[bool, List[str]]:
         """Validate frontend task"""

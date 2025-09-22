@@ -9,24 +9,49 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Primary system colors
+        primary: 'var(--color-primary)',
+        'primary-light': 'var(--color-primary-light)',
+        'primary-dark': 'var(--color-primary-dark)',
+        'primary-darker': 'var(--color-primary-darker)',
+
+        // Semantic colors
+        success: 'var(--color-success)',
+        'success-light': 'var(--color-success-light)',
+        'success-dark': 'var(--color-success-dark)',
+        warning: 'var(--color-warning)',
+        'warning-light': 'var(--color-warning-light)',
+        'warning-dark': 'var(--color-warning-dark)',
+        error: 'var(--color-error)',
+        'error-light': 'var(--color-error-light)',
+        'error-dark': 'var(--color-error-dark)',
+        info: 'var(--color-info)',
+        'info-light': 'var(--color-info-light)',
+        'info-dark': 'var(--color-info-dark)',
+
+        // LinkedIn brand colors (legacy support)
         linkedin: {
-          blue: '#0073b1',
-          lightblue: '#004182',
-          darkblue: '#00344c'
+          blue: 'var(--color-primary)',
+          lightblue: 'var(--color-primary-light)',
+          darkblue: 'var(--color-primary-dark)'
         },
+
+        // Vintage theme colors
         vintage: {
-          paper: '#F4F1DE',
-          'paper-dark': '#F0EDD4',
-          sepia: '#E07A5F',
-          'sepia-dark': '#D96A4F',
-          'sepia-darker': '#C85A3F',
-          ink: '#2F2F2F',
-          'ink-light': '#4A4A4A',
-          accent: '#3D405B',
-          'accent-light': '#5A5F7A',
-          sage: '#81B29A',
-          'sage-light': '#A0C4B0',
-          'sage-dark': '#6B9B84'
+          paper: 'var(--color-vintage-paper)',
+          'paper-dark': 'var(--color-vintage-paper-dark)',
+          sepia: 'var(--color-vintage-sepia)',
+          'sepia-light': 'var(--color-vintage-sepia-light)',
+          'sepia-dark': 'var(--color-vintage-sepia-dark)',
+          'sepia-darker': 'var(--color-vintage-sepia-darker)',
+          ink: 'var(--color-vintage-ink)',
+          'ink-light': 'var(--color-vintage-ink-light)',
+          'ink-lighter': 'var(--color-vintage-ink-lighter)',
+          accent: 'var(--color-vintage-accent)',
+          'accent-light': 'var(--color-vintage-accent-light)',
+          sage: 'var(--color-vintage-sage)',
+          'sage-light': 'var(--color-vintage-sage-light)',
+          'sage-dark': 'var(--color-vintage-sage-dark)'
         }
       },
       fontFamily: {

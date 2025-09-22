@@ -1,0 +1,88 @@
+{
+  "sprintId": "SP-20250919-153014",
+  "name": "Sprint 3 - Critical Automation Fix Backlog",
+  "totalStoryPoints": 13,
+  "items": [
+    {
+      "itemId": "BUG-20250919-222628",
+      "type": "Bug",
+      "title": "Start Automation button fails - pagination elements not found",
+      "description": "The Start Automation button does not work properly. When clicked, the automation attempts to start but immediately fails due to missing pagination elements on the LinkedIn search results page. The automation shows 'No name element found in search results' errors and stops with 'No connectable profiles found on this page, stopping automation' message.",
+      "priority": "Critical",
+      "severity": "Critical",
+      "storyPoints": 13,
+      "status": "Open",
+      "assignee": "frontend_engineer",
+      "estimatedHours": 20,
+      "tags": ["automation", "selectors", "dom", "critical", "pagination", "linkedin-changes", "core-functionality"],
+      "technicalDetails": {
+        "affectedFiles": [
+          "src/content/linkedin-automation.js",
+          "Profile detection logic",
+          "Pagination handling",
+          "Start automation button functionality"
+        ],
+        "rootCause": "LinkedIn DOM structure changes causing selector failures",
+        "affectedSelectors": [
+          "data-test-pagination-page-btn",
+          "Profile name elements in search results"
+        ],
+        "errors": [
+          "No name element found in search results",
+          "Pagination selectors not found (data-test-pagination-page-btn)",
+          "No connectable profiles found on this page, stopping automation"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Start Automation button successfully initiates automation process",
+        "LinkedIn profile elements are correctly identified and processed",
+        "Pagination selectors work properly for page navigation",
+        "No 'No name element found' errors occur during normal operation",
+        "Automation status correctly changes from 'Inactive' to 'Active'",
+        "Core automation functionality is fully restored",
+        "All LinkedIn DOM selectors are updated to current page structure",
+        "Comprehensive error handling prevents automation failures",
+        "User can successfully process LinkedIn profiles through automation",
+        "Console errors related to selector failures are eliminated"
+      ],
+      "testingRequirements": [
+        "Test automation on multiple LinkedIn search result pages",
+        "Verify pagination functionality across different page structures",
+        "Test profile detection accuracy with various LinkedIn layouts",
+        "Validate error handling for edge cases and missing elements",
+        "Confirm automation status updates correctly in all scenarios",
+        "Cross-browser testing to ensure selector stability",
+        "Performance testing to ensure no regression in automation speed"
+      ],
+      "businessImpact": {
+        "userExperience": "Core functionality completely broken - users cannot start automation",
+        "functionality": "Primary feature (automation) is non-functional",
+        "adoption": "Critical blocker for all users attempting to use the extension",
+        "businessImpact": "Complete failure of main product functionality"
+      }
+    }
+  ],
+  "sprintSummary": {
+    "totalItems": 1,
+    "criticalBugs": 1,
+    "highPriorityItems": 1,
+    "estimatedHours": 20,
+    "primaryFocus": "Restore core automation functionality by fixing LinkedIn selector issues",
+    "riskLevel": "Critical",
+    "successCriteria": [
+      "Automation starts successfully when Start Automation button is clicked",
+      "All LinkedIn profile elements are properly detected and processed",
+      "Pagination navigation works correctly across all LinkedIn page types",
+      "Zero selector-related errors in console during normal operation",
+      "100% restoration of core automation functionality"
+    ]
+  },
+  "emergencyProtocols": {
+    "deploymentReady": true,
+    "hotfixPipeline": "Available for immediate deployment once fix is validated",
+    "rollbackPlan": "Revert to previous working selector configuration if needed",
+    "communicationPlan": "Immediate notification to all users once fix is deployed"
+  },
+  "createdTimestamp": "2025-09-19T15:30:14.000Z",
+  "lastUpdated": "2025-09-19T15:30:14.000Z"
+}

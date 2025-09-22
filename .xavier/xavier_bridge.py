@@ -30,13 +30,17 @@ def main():
 
     # Map commands
     command_map = {
+        'create-project': '/create-project',
         'create-story': '/create-story',
         'create-task': '/create-task',
         'create-bug': '/create-bug',
         'create-sprint': '/create-sprint',
         'start-sprint': '/start-sprint',
         'show-backlog': '/show-backlog',
-        'xavier-help': '/xavier-help'
+        'xavier-help': '/xavier-help',
+        'xavier-update': '/xavier-update',
+        'estimate-story': '/estimate-story',
+        'set-story-points': '/set-story-points'
     }
 
     xavier_command = command_map.get(command.replace('/', ''), f"/{command}")

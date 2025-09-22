@@ -1,0 +1,88 @@
+{
+  "sprintId": "SP-20250919-140344",
+  "name": "Sprint 1 - CSS Fix & Core Features",
+  "goal": "Fix critical CSS loading bug and advance core LinkedIn automation features",
+  "startDate": "2025-09-19",
+  "endDate": "2025-10-03",
+  "duration": 14,
+  "status": "Active",
+  "velocityTarget": 20,
+  "actualVelocity": 0,
+  "burndownData": [],
+  "metrics": {
+    "plannedStoryPoints": 8,
+    "completedStoryPoints": 8,
+    "tasksCompleted": 1,
+    "tasksTotal": 1,
+    "bugsResolved": 1,
+    "blockers": 0
+  },
+  "items": [
+    {
+      "itemId": "BUG-20250919-135745",
+      "type": "Bug",
+      "title": "UI is broken - CSS not loading properly",
+      "description": "Critical CSS loading issue affecting extension UI",
+      "priority": "High",
+      "storyPoints": 8,
+      "status": "Done",
+      "assignee": null,
+      "tags": ["css", "ui", "critical"],
+      "acceptanceCriteria": [
+        "Extension UI displays properly with all CSS styles loaded",
+        "No 404 errors for CSS resources in browser dev tools",
+        "Clean and functional interface with proper styling",
+        "All visual elements render correctly across different LinkedIn pages"
+      ]
+    }
+  ],
+  "teamMembers": [
+    {
+      "role": "project_manager",
+      "enabled": true
+    },
+    {
+      "role": "frontend_engineer",
+      "enabled": true
+    },
+    {
+      "role": "context_manager",
+      "enabled": true
+    }
+  ],
+  "retrospective": {
+    "whatWentWell": [],
+    "whatCouldImprove": [],
+    "actionItems": []
+  },
+  "dailyStandups": [],
+  "createdTimestamp": "2025-09-19T21:03:47.000Z",
+  "lastUpdated": "2025-09-19T21:04:00.000Z",
+  "createdBy": "Xavier System",
+  "framework": {
+    "methodology": "SCRUM",
+    "ceremonies": {
+      "sprintPlanning": {
+        "scheduled": true,
+        "completed": false,
+        "date": null
+      },
+      "dailyStandup": {
+        "scheduled": true,
+        "frequency": "daily"
+      },
+      "sprintReview": {
+        "scheduled": true,
+        "completed": false,
+        "date": null
+      },
+      "sprintRetrospective": {
+        "scheduled": true,
+        "completed": false,
+        "date": null
+      }
+    }
+  },
+  "autoPlan": true,
+  "version": "1.0.0"
+}

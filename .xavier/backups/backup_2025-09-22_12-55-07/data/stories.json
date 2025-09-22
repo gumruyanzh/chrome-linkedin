@@ -1,0 +1,30 @@
+{
+  "US-B67EDA8E": {
+    "id": "US-B67EDA8E",
+    "title": "Progress Bar During Extension Operation",
+    "description": "As a user, I want to see a progress bar during operation of the extension, so that I can understand the status and progress of ongoing operations",
+    "as_a": "user",
+    "i_want": "to see a progress bar during operation of the extension",
+    "so_that": "I can understand the status and progress of ongoing operations",
+    "acceptance_criteria": [
+      "Progress bar appears when extension starts processing",
+      "Progress bar shows percentage completion",
+      "Progress bar displays current operation status",
+      "Progress bar disappears when operation completes"
+    ],
+    "story_points": 5,
+    "priority": "Medium",
+    "epic_id": null,
+    "tasks": [
+      "T-161631F4",
+      "T-4A846274",
+      "T-8A0CC702",
+      "T-F720DB24",
+      "T-CD3EE0BA"
+    ],
+    "bugs": [],
+    "status": "In Progress",
+    "created_at": "2025-09-20T11:17:23.170794",
+    "updated_at": "2025-09-20T11:22:29.713176"
+  }
+}

@@ -11,8 +11,16 @@ import logging
 from datetime import datetime
 
 from ..core.xavier_engine import XavierEngine, ItemType, Priority
-from ..scrum.scrum_manager import SCRUMManager
+from ..scrum.scrum_manager import SCRUMManager, safe_get_attr, safe_set_attr, get_sprint_status_value
 from ..agents.orchestrator import AgentOrchestrator, AgentTask
+
+# Try to import ANSI art module
+try:
+    from ..utils.ansi_art import display_welcome, display_sprint_start, display_mini_banner
+except ImportError:
+    display_welcome = None
+    display_sprint_start = None
+    display_mini_banner = None
 
 
 class XavierCommands:
@@ -55,6 +63,7 @@ class XavierCommands:
             "/create-sprint": self.create_sprint,
             "/start-sprint": self.start_sprint,
             "/end-sprint": self.end_sprint,
+            "/set-story-points": self.set_story_points,
             "/estimate-story": self.estimate_story,
             "/assign-task": self.assign_task,
             "/review-code": self.review_code,
@@ -66,7 +75,8 @@ class XavierCommands:
             "/list-bugs": self.list_bugs,
             "/show-backlog": self.show_backlog,
             "/show-sprint": self.show_sprint,
-            "/xavier-help": self.show_help
+            "/xavier-help": self.show_help,
+            "/xavier-update": self.xavier_update
         }
 
     def execute(self, command: str, args: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -272,46 +282,515 @@ class XavierCommands:
 
     def create_project(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Initialize a new Xavier project
+        Initialize a new Xavier project with intelligent analysis
         Args:
-            name: Project name
-            description: Project description
-            tech_stack: Technology stack definition
+            name: Project name (required)
+            description: Detailed project description (can be multi-line)
+            tech_stack: Technology stack definition (optional - will be suggested if not provided)
+            project_type: Type of project (web, api, mobile, ecommerce, blog, etc.)
+            auto_generate_stories: Generate initial stories from description (default: True)
+            auto_setup_agents: Configure agents based on tech stack (default: True)
+            template: Use a pre-defined template (optional)
             team_size: Team size
             methodology: Development methodology (Scrum/Kanban)
         """
-        # Create project configuration
+        from ..analyzers.project_analyzer import ProjectAnalyzer
+        from ..analyzers.project_templates import ProjectTemplates
+
+        # Validate required fields
+        if "name" not in args:
+            raise ValueError("Project name is required")
+
+        project_name = args["name"]
+        description = args.get("description", f"Project {project_name}")
+        tech_stack = args.get("tech_stack", None)
+        project_type = args.get("project_type", None)
+        auto_generate_stories = args.get("auto_generate_stories", True)
+        auto_setup_agents = args.get("auto_setup_agents", True)
+        template_name = args.get("template", None)
+
+        # If template is specified, use it as base
+        if template_name:
+            template = ProjectTemplates.get_template(template_name)
+            if not tech_stack:
+                tech_stack = template.tech_stack
+            initial_structure = template.initial_structure
+            initial_files = template.initial_files
+            template_stories = template.default_stories
+        else:
+            initial_structure = []
+            initial_files = {}
+            template_stories = []
+
+        # Analyze project if description is provided
+        analyzer = ProjectAnalyzer()
+        analysis = analyzer.analyze(project_name, description, tech_stack)
+
+        # Use analysis results
+        if not tech_stack:
+            tech_stack = analysis.suggested_tech_stack
+
+        if not project_type:
+            project_type = analysis.project_type
+
+        # Create enhanced project configuration
         project_config = {
-            "name": args["name"],
-            "description": args["description"],
-            "tech_stack": args.get("tech_stack", {}),
+            "name": project_name,
+            "description": description,
+            "project_type": project_type,
+            "tech_stack": tech_stack,
+            "detected_features": analysis.detected_features,
+            "performance_requirements": analysis.performance_requirements,
+            "estimated_complexity": analysis.estimated_complexity,
             "team_size": args.get("team_size", 5),
             "methodology": args.get("methodology", "Scrum"),
             "created_at": datetime.now().isoformat(),
-            "xavier_version": "1.0.0"
+            "xavier_version": "1.1.9"
         }
 
         # Save project configuration
         with open(self.config_path, 'w') as f:
             json.dump(project_config, f, indent=2)
 
-        # Initialize project structure
-        directories = [
-            "src", "tests", "docs", "scripts",
-            ".xavier/agents", ".xavier/sprints", ".xavier/reports"
-        ]
-        for directory in directories:
+        # Initialize project structure based on tech stack
+        directories = self._generate_project_structure(tech_stack, project_type)
+
+        # Add template directories if using template
+        if initial_structure:
+            directories.extend(initial_structure)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_directories = []
+        for d in directories:
+            if d not in seen:
+                seen.add(d)
+                unique_directories.append(d)
+
+        # Create all directories
+        for directory in unique_directories:
             os.makedirs(os.path.join(self.project_path, directory), exist_ok=True)
 
-        # Generate agents for tech stack
-        if "tech_stack" in args:
+        # Create initial files from template
+        files_created = []
+        for file_path, content in initial_files.items():
+            full_path = os.path.join(self.project_path, file_path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, 'w') as f:
+                f.write(content)
+            files_created.append(file_path)
+
+        # Setup agents based on tech stack
+        agents_created = []
+        if auto_setup_agents:
+            agents_created = self._setup_project_agents(tech_stack)
+            # Generate agents for tech stack
             self.orchestrator._generate_tech_stack_agents()
+
+        # Generate initial stories and epics
+        stories_created = []
+        epics_created = []
+
+        if auto_generate_stories:
+            # Create epics
+            for epic_data in analysis.suggested_epics:
+                epic = self.scrum.create_epic(
+                    title=epic_data["title"],
+                    description=epic_data["description"],
+                    business_value=100  # High value for auto-generated epics
+                )
+                epics_created.append({
+                    "id": epic.id,
+                    "title": epic.title
+                })
+
+            # Create stories from analysis
+            for story_data in analysis.suggested_stories:
+                story = self.scrum.create_story(
+                    title=story_data["title"],
+                    as_a=story_data.get("as_a", "user"),
+                    i_want=story_data.get("i_want", story_data["title"]),
+                    so_that=story_data.get("so_that", "I can use the system"),
+                    acceptance_criteria=story_data.get("acceptance_criteria", []),
+                    priority=story_data.get("priority", "Medium")
+                )
+
+                # Auto-estimate story points
+                if "story_points" in story_data:
+                    self.scrum.estimate_story(story.id, story_data["story_points"])
+
+                stories_created.append({
+                    "id": story.id,
+                    "title": story.title,
+                    "points": story_data.get("story_points", 0)
+                })
+
+            # Add template stories if any
+            for story_data in template_stories:
+                story = self.scrum.create_story(
+                    title=story_data["title"],
+                    as_a="developer",
+                    i_want=f"to {story_data['title'].lower()}",
+                    so_that="the project has proper foundation",
+                    acceptance_criteria=[],
+                    priority=story_data.get("priority", "Medium")
+                )
+
+                if "story_points" in story_data:
+                    self.scrum.estimate_story(story.id, story_data["story_points"])
+
+                stories_created.append({
+                    "id": story.id,
+                    "title": story.title,
+                    "points": story_data.get("story_points", 0)
+                })
+
+        # Auto-generate roadmap for the project
+        roadmap_created = self._generate_default_roadmap(project_config, analysis)
+
+        # Create README.md with project information
+        readme_content = self._generate_readme(project_config, analysis)
+        with open(os.path.join(self.project_path, "README.md"), 'w') as f:
+            f.write(readme_content)
+
+        # Generate project summary
+        summary = analyzer.generate_project_summary(analysis)
 
         return {
             "project": project_config,
-            "directories_created": directories,
-            "agents_available": list(self.orchestrator.agents.keys())
+            "analysis_summary": summary,
+            "directories_created": len(unique_directories),
+            "files_created": files_created,
+            "agents_configured": agents_created,
+            "epics_created": len(epics_created),
+            "stories_created": len(stories_created),
+            "roadmap_created": roadmap_created,
+            "total_story_points": sum(s["points"] for s in stories_created),
+            "next_steps": [
+                f"Review generated stories with /show-backlog",
+                f"Review generated roadmap with /xavier-help roadmap",
+                f"Create first sprint with /create-sprint",
+                f"Start development with /start-sprint",
+                f"View project details in README.md"
+            ]
         }
+
+    def _generate_project_structure(self, tech_stack: Dict[str, Any],
+                                   project_type: str) -> List[str]:
+        """Generate project directory structure based on tech stack"""
+        directories = [
+            ".xavier",
+            ".xavier/data",
+            ".xavier/agents",
+            ".xavier/sprints",
+            ".xavier/reports",
+            ".claude",
+            ".claude/commands",
+            "docs",
+            "scripts",
+            "tests"
+        ]
+
+        # Add frontend directories if needed
+        if "frontend" in tech_stack:
+            frontend_framework = tech_stack["frontend"].get("framework", "").lower()
+            if "react" in frontend_framework or "next" in frontend_framework:
+                directories.extend([
+                    "frontend",
+                    "frontend/src",
+                    "frontend/src/components",
+                    "frontend/src/pages",
+                    "frontend/src/services",
+                    "frontend/src/utils",
+                    "frontend/public"
+                ])
+            elif "vue" in frontend_framework:
+                directories.extend([
+                    "frontend",
+                    "frontend/src",
+                    "frontend/src/components",
+                    "frontend/src/views",
+                    "frontend/src/services",
+                    "frontend/public"
+                ])
+
+        # Add backend directories
+        if "backend" in tech_stack:
+            backend_lang = tech_stack["backend"].get("language", "").lower()
+            if "python" in backend_lang:
+                directories.extend([
+                    "backend",
+                    "backend/app",
+                    "backend/app/api",
+                    "backend/app/core",
+                    "backend/app/models",
+                    "backend/app/services",
+                    "backend/tests"
+                ])
+            elif "go" in backend_lang:
+                directories.extend([
+                    "backend",
+                    "backend/cmd",
+                    "backend/internal",
+                    "backend/pkg",
+                    "backend/api"
+                ])
+            elif "node" in backend_lang or "javascript" in backend_lang:
+                directories.extend([
+                    "backend",
+                    "backend/src",
+                    "backend/src/routes",
+                    "backend/src/models",
+                    "backend/src/services",
+                    "backend/src/middleware"
+                ])
+
+        # Add Docker support
+        if "devops" in tech_stack:
+            if "docker" in str(tech_stack["devops"]).lower():
+                directories.append("docker")
+            if "kubernetes" in str(tech_stack["devops"]).lower():
+                directories.append("k8s")
+
+        # Add CI/CD
+        directories.append(".github/workflows")
+
+        return directories
+
+    def _setup_project_agents(self, tech_stack: Dict[str, Any]) -> List[str]:
+        """Setup agents based on project tech stack"""
+        agents = ["project_manager", "context_manager"]  # Always include these
+
+        # Add language-specific agents
+        if "backend" in tech_stack:
+            backend_lang = tech_stack["backend"].get("language", "").lower()
+            if "python" in backend_lang:
+                agents.append("python_engineer")
+            if "go" in backend_lang:
+                agents.append("golang_engineer")
+            if "node" in backend_lang or "javascript" in backend_lang:
+                agents.append("nodejs_engineer")
+
+        if "frontend" in tech_stack:
+            agents.append("frontend_engineer")
+
+        if "database" in tech_stack:
+            agents.append("database_engineer")
+
+        if "devops" in tech_stack:
+            agents.append("devops_engineer")
+
+        # Configure agents in Xavier config
+        agent_config = {}
+        for agent in agents:
+            agent_config[agent] = {"enabled": True}
+
+        # Update configuration
+        config = {}
+        if os.path.exists(self.config_path):
+            with open(self.config_path, 'r') as f:
+                config = json.load(f)
+
+        config["agents"] = agent_config
+
+        with open(self.config_path, 'w') as f:
+            json.dump(config, f, indent=2)
+
+        return agents
+
+    def _generate_default_roadmap(self, project_config: Dict[str, Any], analysis: Any) -> Dict[str, Any]:
+        """Generate a default roadmap for the project"""
+        # Create roadmap using SCRUM manager
+        roadmap_name = f"{project_config['name']} Product Roadmap"
+        vision = project_config.get('description', f"Building {project_config['name']} with modern technologies")
+
+        roadmap = self.scrum.create_roadmap(
+            name=roadmap_name,
+            vision=vision
+        )
+
+        # Generate default milestones based on project type and complexity
+        milestones = self._generate_default_milestones(project_config, analysis)
+
+        # Add milestones to roadmap
+        for milestone in milestones:
+            self.scrum.add_milestone_to_roadmap(
+                roadmap_id=roadmap.id,
+                milestone_name=milestone["name"],
+                target_date=milestone["target_date"],
+                epics=milestone.get("epics", []),
+                success_criteria=milestone["success_criteria"]
+            )
+
+        return {
+            "id": roadmap.id,
+            "name": roadmap.name,
+            "vision": roadmap.vision,
+            "milestones_count": len(milestones)
+        }
+
+    def _generate_default_milestones(self, project_config: Dict[str, Any], analysis: Any) -> List[Dict[str, Any]]:
+        """Generate default milestones based on project type"""
+        from datetime import datetime, timedelta
+
+        milestones = []
+        start_date = datetime.now()
+
+        # Basic milestones that apply to most projects
+        milestones.append({
+            "name": "MVP Foundation",
+            "target_date": start_date + timedelta(weeks=4),
+            "success_criteria": [
+                "Core architecture established",
+                "Basic authentication system",
+                "Initial database schema",
+                "Development environment setup"
+            ]
+        })
+
+        milestones.append({
+            "name": "Core Features Complete",
+            "target_date": start_date + timedelta(weeks=8),
+            "success_criteria": [
+                "Primary user workflows implemented",
+                "API endpoints functional",
+                "Basic UI/UX complete",
+                "Unit tests coverage > 70%"
+            ]
+        })
+
+        milestones.append({
+            "name": "Beta Release",
+            "target_date": start_date + timedelta(weeks=12),
+            "success_criteria": [
+                "Feature complete",
+                "Performance testing complete",
+                "Security audit passed",
+                "Documentation complete"
+            ]
+        })
+
+        milestones.append({
+            "name": "Production Launch",
+            "target_date": start_date + timedelta(weeks=16),
+            "success_criteria": [
+                "Deployment pipeline established",
+                "Monitoring and logging active",
+                "User acceptance testing passed",
+                "Go-live checklist complete"
+            ]
+        })
+
+        return milestones
+
+    def _generate_readme(self, project_config: Dict[str, Any],
+                        analysis: Any) -> str:
+        """Generate README.md content for the project"""
+        readme = f"""# {project_config['name']}
+
+{project_config['description']}
+
+## Project Overview
+
+- **Type**: {project_config['project_type'].replace('_', ' ').title()}
+- **Complexity**: {project_config['estimated_complexity']}
+- **Methodology**: {project_config['methodology']}
+- **Created**: {project_config['created_at']}
+
+## Tech Stack
+
+"""
+
+        for component, details in project_config['tech_stack'].items():
+            readme += f"### {component.title()}\n"
+            if isinstance(details, dict):
+                for key, value in details.items():
+                    if value and key != "alternatives":
+                        readme += f"- **{key.title()}**: {value}\n"
+            else:
+                readme += f"- {details}\n"
+            readme += "\n"
+
+        if project_config['detected_features']:
+            readme += "## Features\n\n"
+            for feature in project_config['detected_features']:
+                readme += f"- {feature.replace('_', ' ').title()}\n"
+            readme += "\n"
+
+        if project_config['performance_requirements']:
+            readme += "## Performance Requirements\n\n"
+            for req in project_config['performance_requirements']:
+                readme += f"- {req.replace('_', ' ').title()}\n"
+            readme += "\n"
+
+        readme += """## Getting Started
+
+### Prerequisites
+
+- Python 3.8+
+- Xavier Framework installed
+- Claude Code
+
+### Installation
+
+```bash
+# Install dependencies
+./scripts/setup.sh
+
+# Initialize Xavier
+/xavier-help
+```
+
+### Development
+
+```bash
+# View backlog
+/show-backlog
+
+# Create sprint
+/create-sprint "Sprint 1" "Initial development" 14
+
+# Start sprint
+/start-sprint
+```
+
+## Xavier Commands
+
+- `/create-story` - Create user stories
+- `/create-task` - Create tasks
+- `/create-bug` - Report bugs
+- `/create-sprint` - Plan sprints
+- `/start-sprint` - Begin development
+- `/show-backlog` - View backlog
+- `/xavier-help` - Get help
+
+## Project Structure
+
+```
+.
+├── .xavier/          # Xavier framework data
+├── .claude/          # Claude Code integration
+├── backend/          # Backend application
+├── frontend/         # Frontend application (if applicable)
+├── tests/            # Test suites
+├── docs/             # Documentation
+└── scripts/          # Utility scripts
+```
+
+## Contributing
+
+This project follows Xavier Framework standards:
+- 100% test coverage required
+- Test-first development (TDD)
+- Clean Code principles
+- Sequential task execution
+- SOLID design patterns
+
+## License
+
+[Add your license here]
+"""
+        return readme
 
     def learn_project(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -372,13 +851,14 @@ class XavierCommands:
 
         # Auto-plan if requested
         if args.get("auto_plan", True):
-            stories, tasks, bugs = self.scrum.plan_sprint(sprint.id)
+            sprint_id = safe_get_attr(sprint, 'id')
+            stories, tasks, bugs = self.scrum.plan_sprint(sprint_id)
             return {
-                "sprint_id": sprint.id,
-                "name": sprint.name,
-                "goal": sprint.goal,
-                "velocity": sprint.velocity,
-                "committed_points": sprint.committed_points,
+                "sprint_id": sprint_id,
+                "name": safe_get_attr(sprint, 'name'),
+                "goal": safe_get_attr(sprint, 'goal'),
+                "velocity": safe_get_attr(sprint, 'velocity'),
+                "committed_points": safe_get_attr(sprint, 'committed_points', 0),
                 "stories": len(stories),
                 "tasks": len(tasks),
                 "bugs": len(bugs),
@@ -386,10 +866,10 @@ class XavierCommands:
             }
 
         return {
-            "sprint_id": sprint.id,
-            "name": sprint.name,
-            "goal": sprint.goal,
-            "velocity": sprint.velocity,
+            "sprint_id": safe_get_attr(sprint, 'id'),
+            "name": safe_get_attr(sprint, 'name'),
+            "goal": safe_get_attr(sprint, 'goal'),
+            "velocity": safe_get_attr(sprint, 'velocity'),
             "status": "Created - Ready for planning"
         }
 
@@ -405,15 +885,25 @@ class XavierCommands:
         # Find sprint
         if not sprint_id:
             # Find latest planned sprint
-            planned_sprints = [s for s in self.scrum.sprints.values()
-                             if s.status.value == "Planning"]
+            planned_sprints = []
+            for s in self.scrum.sprints.values():
+                status_value = get_sprint_status_value(s)
+                if status_value == "Planning":
+                    planned_sprints.append(s)
+
             if not planned_sprints:
                 raise ValueError("No planned sprint found")
-            sprint_id = planned_sprints[0].id
+            sprint_id = safe_get_attr(planned_sprints[0], 'id')
 
         # Start sprint in SCRUM manager
         self.scrum.start_sprint(sprint_id)
         sprint = self.scrum.sprints[sprint_id]
+
+        # Display sprint start banner
+        import subprocess
+        greeting_script = os.path.join(os.path.dirname(__file__), "..", "utils", "greeting.sh")
+        if os.path.exists(greeting_script):
+            subprocess.run([greeting_script, "sprint-start"], check=False)
 
         # Prepare tasks for agents
         agent_tasks = []
@@ -498,9 +988,9 @@ class XavierCommands:
             "status": "Completed"
         }
 
-    def estimate_story(self, args: Dict[str, Any]) -> Dict[str, Any]:
+    def set_story_points(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Estimate story points
+        Manually set story points for a story
         Args:
             story_id: Story ID
             points: Story points (must be Fibonacci: 1,2,3,5,8,13,21)
@@ -515,6 +1005,94 @@ class XavierCommands:
             "title": story.title,
             "story_points": story.story_points,
             "priority": story.priority
+        }
+
+    def estimate_story(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Use PM agent to automatically estimate story points for backlog stories
+        Args:
+            story_id: Optional specific story to estimate
+            all: Optional flag to re-estimate all stories (default: False)
+        """
+        from agents.base_agent import AgentTask
+
+        story_id = args.get("story_id", None)
+        estimate_all = args.get("all", False)
+
+        # Get stories to estimate
+        stories_to_estimate = []
+
+        if story_id:
+            # Estimate specific story
+            if story_id not in self.scrum.stories:
+                return {
+                    "success": False,
+                    "error": f"Story {story_id} not found"
+                }
+            stories_to_estimate = [self.scrum.stories[story_id]]
+        else:
+            # Estimate all unestimated backlog stories
+            stories_to_estimate = [
+                s for s in self.scrum.stories.values()
+                if safe_get_attr(s, 'status') == "Backlog" and
+                (safe_get_attr(s, 'story_points', 0) == 0 or estimate_all)
+            ]
+
+        if not stories_to_estimate:
+            return {
+                "success": True,
+                "message": "No stories need estimation",
+                "stories_estimated": 0
+            }
+
+        # Show PM agent starting
+        print(f"\n📊 Project Manager starting story estimation...")
+        print(f"Stories to estimate: {len(stories_to_estimate)}\n")
+
+        # Delegate to PM agent for each story
+        results = []
+        for story in stories_to_estimate:
+            # Create estimation task for PM agent
+            story_id = safe_get_attr(story, 'id')
+            story_title = safe_get_attr(story, 'title', 'Untitled Story')
+            story_description = safe_get_attr(story, 'description', '')
+            story_criteria = safe_get_attr(story, 'acceptance_criteria', [])
+
+            task = AgentTask(
+                task_id=f"ESTIMATE-{story_id}",
+                task_type="estimate_story",
+                description=f"{story_title}. {story_description}",
+                requirements=story_criteria,
+                test_requirements={},
+                acceptance_criteria=["Provide story point estimate"],
+                tech_constraints=[]
+            )
+
+            # Delegate to orchestrator for colored agent display
+            result = self.orchestrator.delegate_task(task)
+
+            if result.success:
+                points = result.validation_results.get("story_points", 5)
+                self.scrum.estimate_story(story_id, points)
+                safe_set_attr(story, 'story_points', points)
+
+                results.append({
+                    "story_id": story_id,
+                    "title": story_title,
+                    "points": points
+                })
+
+        # Calculate sprint planning metrics
+        total_points = sum(r["points"] for r in results)
+        velocity = self.scrum._calculate_velocity() if hasattr(self.scrum, '_calculate_velocity') else 20
+
+        return {
+            "success": True,
+            "stories_estimated": len(results),
+            "total_points": total_points,
+            "estimated_sprints": total_points / velocity if velocity > 0 else 0,
+            "estimates": results,
+            "message": f"Estimated {len(results)} stories with total {total_points} points"
         }
 
     def assign_task(self, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -691,24 +1269,26 @@ class XavierCommands:
         # Get top priority items
         priority_items = []
         for story in self.scrum.stories.values():
-            if story.status == "Backlog":
+            if safe_get_attr(story, 'status') == "Backlog":
                 priority_items.append({
                     "type": "Story",
-                    "id": story.id,
-                    "title": story.title,
-                    "points": story.story_points,
-                    "priority": story.priority
+                    "id": safe_get_attr(story, 'id'),
+                    "title": safe_get_attr(story, 'title'),
+                    "points": safe_get_attr(story, 'story_points', 0),
+                    "priority": safe_get_attr(story, 'priority', 'Medium')
                 })
 
         for bug in self.scrum.bugs.values():
-            if bug.status == "Open" and bug.severity in ["Critical", "High"]:
+            status = safe_get_attr(bug, 'status')
+            severity = safe_get_attr(bug, 'severity', 'Medium')
+            if status == "Open" and severity in ["Critical", "High"]:
                 priority_items.append({
                     "type": "Bug",
-                    "id": bug.id,
-                    "title": bug.title,
-                    "points": bug.story_points,
-                    "priority": bug.priority,
-                    "severity": bug.severity
+                    "id": safe_get_attr(bug, 'id'),
+                    "title": safe_get_attr(bug, 'title'),
+                    "points": safe_get_attr(bug, 'story_points', 0),
+                    "priority": safe_get_attr(bug, 'priority', 'Medium'),
+                    "severity": severity
                 })
 
         report["top_priority_items"] = sorted(
@@ -726,31 +1306,264 @@ class XavierCommands:
 
         return self.scrum.get_sprint_report(sprint_id)
 
-    def show_help(self, args: Dict[str, Any]) -> Dict[str, str]:
+    def show_help(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Show Xavier help and commands"""
+        # Display ANSI art greeting
+        import subprocess
+        greeting_script = os.path.join(os.path.dirname(__file__), "..", "utils", "greeting.sh")
+        if os.path.exists(greeting_script):
+            subprocess.run([greeting_script, "welcome", "1.1.9"], check=False)
+
+        help_text = """# Xavier Framework Commands
+
+## Project Management
+
+### /create-project - Intelligently initialize a new Xavier project
+Creates a new project with AI-powered analysis of requirements and automatic tech stack selection.
+
+**Example:**
+```json
+{
+  "name": "TodoApp",
+  "description": "A task management app with user auth, real-time updates, and team collaboration"
+}
+```
+
+**With tech stack:**
+```json
+{
+  "name": "TodoApp",
+  "description": "Task management application",
+  "tech_stack": {
+    "backend": "python/fastapi",
+    "frontend": "react",
+    "database": "postgresql"
+  }
+}
+```
+
+## Story Management
+
+### /create-story - Create a user story with acceptance criteria
+**Example:**
+```json
+{
+  "title": "User Authentication",
+  "as_a": "user",
+  "i_want": "to log in securely",
+  "so_that": "I can access my account",
+  "acceptance_criteria": ["Email validation", "Password check"],
+  "priority": "High"
+}
+```
+
+### /create-task - Create a task under a story
+**Example:**
+```json
+{
+  "story_id": "STORY-001",
+  "title": "Implement login endpoint",
+  "description": "Create POST /api/login endpoint",
+  "estimated_hours": 4
+}
+```
+
+### /create-bug - Report a bug with reproduction steps
+**Example:**
+```json
+{
+  "title": "Login fails with special characters",
+  "description": "Users cannot log in if password contains @",
+  "steps_to_reproduce": ["Go to login", "Enter password with @", "Click login"],
+  "severity": "High"
+}
+```
+
+## Sprint Management
+
+### /create-sprint - Create a new sprint with auto-planning
+**Example:**
+```json
+{
+  "name": "Sprint 1",
+  "goal": "Complete user authentication",
+  "duration_days": 14
+}
+```
+
+### /start-sprint - Start sprint execution with agents
+### /end-sprint - Complete sprint with retrospective
+
+## Reporting & Analysis
+
+### /show-backlog - Show backlog overview
+
+### /estimate-story - Automatically estimate story points using PM agent
+Triggers the Project Manager agent to analyze and estimate story points for backlog stories.
+
+**Usage:**
+```
+/estimate-story              # Estimate all unestimated backlog stories
+/estimate-story STORY-001    # Estimate specific story
+/estimate-story --all        # Re-estimate all stories
+```
+
+The PM agent analyzes:
+- Technical complexity (API, database, authentication, etc.)
+- Number and complexity of acceptance criteria
+- UI/UX requirements
+- Testing requirements
+- Integration points
+
+**Example:**
+```
+/estimate-story
+
+📊 [PM] ProjectManager
+Taking over task: Estimating backlog stories
+Analyzing: Complexity score 12 → 5 points
+
+Stories estimated: 3
+Total points: 13
+Estimated sprints: 0.7
+```
+### /show-sprint - Show sprint details
+### /tech-stack-analyze - Analyze project tech stack
+### /learn-project - Learn existing project structure
+### /generate-report - Generate various reports
+
+## Other Commands
+
+### /create-roadmap - Create product roadmap
+### /estimate-story - Use PM agent to automatically estimate backlog stories
+### /set-story-points - Manually set story points for a specific story
+### /assign-task - Assign task to agent
+### /review-code - Trigger code review
+### /create-agent - Create custom agent
+### /list-stories - List all user stories
+### /list-tasks - List all tasks
+### /list-bugs - List all bugs
+### /xavier-help - Show this help message
+
+## Quick Tips
+
+1. Use `/create-project` first to initialize your project with intelligent analysis
+2. Xavier will suggest the best tech stack based on your requirements
+3. All commands accept JSON arguments
+4. Stories are automatically estimated and prioritized
+5. Agents work sequentially following TDD and Clean Code principles
+"""
         return {
-            "/create-story": "Create a user story with acceptance criteria",
-            "/create-task": "Create a task under a story",
-            "/create-bug": "Report a bug with reproduction steps",
-            "/create-roadmap": "Create product roadmap with milestones",
-            "/create-project": "Initialize new Xavier project",
-            "/learn-project": "Learn existing project structure",
-            "/create-sprint": "Create a new sprint with auto-planning",
-            "/start-sprint": "Start sprint execution with agents",
-            "/end-sprint": "Complete sprint with retrospective",
-            "/estimate-story": "Estimate story points",
-            "/assign-task": "Assign task to agent",
-            "/review-code": "Trigger code review",
-            "/generate-report": "Generate various reports",
-            "/tech-stack-analyze": "Analyze project tech stack",
-            "/create-agent": "Create custom agent for tech stack",
-            "/list-stories": "List all user stories",
-            "/list-tasks": "List all tasks",
-            "/list-bugs": "List all bugs",
-            "/show-backlog": "Show backlog overview",
-            "/show-sprint": "Show sprint details",
-            "/xavier-help": "Show this help message"
+            "help": help_text,
+            "commands_count": 22,
+            "framework_version": "1.1.9"
         }
+
+    def xavier_update(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for and install Xavier Framework updates"""
+        import subprocess
+        import requests
+
+        # Get current version from multiple sources (priority order)
+        current_version = "1.1.9"  # Embedded fallback version
+
+        # 1. Try VERSION file first (most reliable)
+        version_file = os.path.join(self.project_path, "VERSION")
+        if os.path.exists(version_file):
+            try:
+                with open(version_file, 'r') as f:
+                    current_version = f.read().strip()
+            except:
+                pass
+
+        # 2. Try .xavier/config.json as secondary source
+        elif os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, 'r') as f:
+                    config = json.load(f)
+                    current_version = config.get("xavier_version", current_version)
+            except:
+                pass
+
+        # Check for latest version
+        try:
+            response = requests.get("https://raw.githubusercontent.com/gumruyanzh/xavier/main/VERSION")
+            latest_version = response.text.strip()
+        except:
+            return {
+                "success": False,
+                "error": "Unable to check for updates. Please check your internet connection.",
+                "current_version": current_version
+            }
+
+        # Compare versions
+        def version_tuple(v):
+            return tuple(map(int, (v.split("."))))
+
+        # Prevent downgrades
+        try:
+            current_tuple = version_tuple(current_version)
+            latest_tuple = version_tuple(latest_version)
+        except ValueError as e:
+            return {
+                "success": False,
+                "error": f"Invalid version format: {e}",
+                "current_version": current_version
+            }
+
+        if latest_tuple < current_tuple:
+            return {
+                "success": False,
+                "error": f"Cannot downgrade from {current_version} to {latest_version}",
+                "current_version": current_version,
+                "latest_version": latest_version,
+                "message": f"❌ Your version ({current_version}) is newer than the remote version ({latest_version})\n\n" +
+                          "This usually means:\n" +
+                          "• You're using a development version\n" +
+                          "• The remote repository has an older version\n" +
+                          "• There's a caching issue\n\n" +
+                          "No action needed - you're already on a newer version!"
+            }
+
+        if latest_tuple > current_tuple:
+            # New version available
+            changelog = self._get_update_changelog(current_version, latest_version)
+
+            return {
+                "success": True,
+                "update_available": True,
+                "current_version": current_version,
+                "latest_version": latest_version,
+                "changelog": changelog,
+                "update_command": "curl -sSL https://raw.githubusercontent.com/gumruyanzh/xavier/main/update.sh | bash",
+                "message": f"Xavier Framework update available: {current_version} → {latest_version}\n\n" +
+                          f"What's new:\n{changelog}\n\n" +
+                          f"To update, run:\n  curl -sSL https://raw.githubusercontent.com/gumruyanzh/xavier/main/update.sh | bash"
+            }
+        else:
+            return {
+                "success": True,
+                "update_available": False,
+                "current_version": current_version,
+                "message": f"✅ Xavier Framework is up to date (version {current_version})"
+            }
+
+    def _get_update_changelog(self, current_version: str, latest_version: str) -> str:
+        """Get changelog for version update"""
+        # This could fetch from CHANGELOG.md in the future
+        changelog = ""
+
+        if current_version in ["1.0.0", "1.0.1"]:
+            changelog += "• Intelligent /create-project command with AI-powered analysis\n"
+            changelog += "• Strict command boundaries preventing auto-implementation\n"
+            changelog += "• /xavier-update command for easy updates\n"
+            changelog += "• Enhanced project templates and tech stack detection\n"
+            changelog += "• Improved command documentation with examples\n"
+
+        if not changelog:
+            changelog = "• Bug fixes and improvements"
+
+        return changelog
 
     def _detect_task_tech_constraints(self, task) -> List[str]:
         """Detect technology constraints from task description"""
@@ -822,6 +1635,11 @@ Xavier enforces the following strict rules:
 
 ## Available Commands
 
+### Project Management
+- `/create-project` - Intelligently initialize new project with AI analysis
+- `/learn-project` - Analyze existing codebase
+- `/tech-stack-analyze` - Detect technologies
+
 ### Story Management
 - `/create-story` - Create user story with acceptance criteria
 - `/create-task` - Create task under a story
@@ -836,10 +1654,6 @@ Xavier enforces the following strict rules:
 - `/show-backlog` - View prioritized backlog
 - `/show-sprint` - Current sprint status
 - `/generate-report` - Generate various reports
-
-### Project
-- `/learn-project` - Analyze existing codebase
-- `/tech-stack-analyze` - Detect technologies
 - `/xavier-help` - Show all commands
 
 ## Workflow
@@ -863,6 +1677,29 @@ Xavier enforces the following strict rules:
         return """# Xavier Commands Reference
 
 All commands use JSON arguments. Examples provided for each command.
+
+## /create-project
+Intelligently initialize a new Xavier project with automatic tech stack analysis.
+
+```json
+{
+  "name": "TodoApp",
+  "description": "A task management application with user authentication, real-time updates, and team collaboration features. Should support mobile devices and have offline capabilities."
+}
+```
+
+With custom tech stack:
+```json
+{
+  "name": "TodoApp",
+  "description": "Task management app",
+  "tech_stack": {
+    "backend": "python/fastapi",
+    "frontend": "react",
+    "database": "postgresql"
+  }
+}
+```
 
 ## /create-story
 Create a user story following SCRUM methodology.

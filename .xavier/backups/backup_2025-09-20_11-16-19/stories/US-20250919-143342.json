@@ -1,0 +1,73 @@
+{
+  "storyId": "US-20250919-143342",
+  "title": "Investigate and Fix UI Design Implementation for Vintage Theme",
+  "asA": "user",
+  "iWant": "a consistent and fully functional vintage UI design across the extension",
+  "soThat": "I have a professional and aesthetically pleasing experience while using the LinkedIn automation features",
+  "acceptanceCriteria": [
+    "All UI components display with proper vintage typography and styling using Crimson Text font family",
+    "CSS loads correctly on all LinkedIn pages without 404 errors or loading failures",
+    "Vintage theme colors (vintage-ink, vintage-sepia, vintage-sage, vintage-accent) are consistent across all views",
+    "Font families (Crimson Text with fallbacks to Georgia, Times New Roman) render properly across all browsers",
+    "UI elements maintain responsive design on desktop, tablet, and mobile viewports",
+    "No visual glitches, styling conflicts, or unstyled elements appear in any part of the extension",
+    "Popup interface displays with complete vintage theme styling and typography",
+    "Dashboard view maintains vintage design consistency with proper paper-like backgrounds",
+    "Content scripts inject vintage styles correctly without conflicts with LinkedIn's existing CSS",
+    "All vintage CSS classes (.vintage-text, .vintage-headline, .vintage-body, etc.) function as intended",
+    "Vintage toggle switches, buttons, and form elements display correctly with vintage styling",
+    "Modal overlays and connection interfaces maintain vintage theme consistency",
+    "Print styles work correctly for true newspaper feel when printing extension content",
+    "Accessibility features work properly with high contrast and reduced motion preferences"
+  ],
+  "priority": "High",
+  "storyPoints": 8,
+  "status": "Backlog",
+  "createdTimestamp": "2025-09-19T14:33:42.000Z",
+  "tags": ["ui", "vintage-design", "css", "typography", "user-experience", "styling"],
+  "description": "The extension previously had a working vintage UI design implementation with proper typography and styling. Users are experiencing issues with the vintage design not displaying correctly, potentially due to CSS loading problems or styling conflicts. This story aims to investigate the current state of the vintage UI implementation and restore full functionality to ensure a consistent, professional vintage newspaper-inspired design across all extension interfaces.",
+  "technicalNotes": {
+    "previousImplementation": "The extension previously used a comprehensive vintage typography system built around Crimson Text font family with CSS custom properties for consistent theming. The vintage-typography.css file contains extensive styling for headlines, body text, quotes, toggles, and responsive design.",
+    "keyComponents": [
+      "vintage-typography.css - Main vintage styling system",
+      "Content scripts for CSS injection on LinkedIn pages",
+      "Popup interface styling",
+      "Dashboard/settings interface styling",
+      "Modal and overlay styling"
+    ],
+    "vintageFontStack": "Crimson Text (Google Fonts), Georgia, Times New Roman, Times, serif",
+    "colorPalette": {
+      "vintage-ink": "#2F2F2F",
+      "vintage-sepia": "#E07A5F",
+      "vintage-sage": "#81B29A",
+      "vintage-accent": "#3D405B",
+      "vintage-paper": "#F4F1DE"
+    }
+  },
+  "dependencies": [
+    "BUG-20250919-135745-css-loading.json - CSS loading infrastructure must be working properly"
+  ],
+  "testCriteria": [
+    "Extension popup displays with vintage typography and proper font rendering",
+    "All LinkedIn pages show vintage-styled extension elements without conflicts",
+    "Settings/dashboard interface maintains vintage theme consistency",
+    "No browser console errors related to CSS loading or font rendering",
+    "Responsive design works correctly across different screen sizes",
+    "Print styles produce newspaper-like output when printing extension content",
+    "High contrast and accessibility preferences are respected"
+  ],
+  "potentialIssues": [
+    "CSS file loading failures due to manifest.json configuration",
+    "Font loading issues with Google Fonts or fallback fonts",
+    "CSS conflicts with LinkedIn's existing styles",
+    "Responsive design breakpoints not working correctly",
+    "Vintage theme variables not being applied consistently",
+    "Modal/overlay styling conflicts or missing styles"
+  ],
+  "environment": {
+    "type": "Chrome Extension",
+    "platform": "LinkedIn Web Application",
+    "browsers": ["Chrome", "Edge", "Firefox"],
+    "devices": ["Desktop", "Tablet", "Mobile"]
+  }
+}
