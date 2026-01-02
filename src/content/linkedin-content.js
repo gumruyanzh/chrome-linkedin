@@ -7,6 +7,10 @@ import { trackEvent, ANALYTICS_EVENTS } from '../utils/analytics.js';
 let isAutomationActive = false;
 let automationInterval = null;
 let rateLimitTracker = null;
+let navigationObserver = null;
+let retryCount = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_BASE = 2000;
 
 // Initialize content script
 initialize();
@@ -108,6 +112,8 @@ async function automationLoop() {
     // Check if we're on a search results page
     if (window.location.href.includes('/search/people/')) {
       await processSearchPage();
+      // Reset retry count on success
+      retryCount = 0;
     } else {
       console.log('Not on a search results page, stopping automation');
       stopAutomation();
@@ -120,8 +126,20 @@ async function automationLoop() {
 
   } catch (error) {
     console.error('Error in automation loop:', error);
-    stopAutomation();
-    showNotification('Automation stopped due to error', 'error');
+
+    // Implement retry logic with exponential backoff
+    if (retryCount < MAX_RETRIES) {
+      retryCount++;
+      const retryDelay = RETRY_DELAY_BASE * Math.pow(2, retryCount - 1);
+      console.log(`Retrying automation (attempt ${retryCount}/${MAX_RETRIES}) in ${retryDelay}ms`);
+      showNotification(`Retrying... (${retryCount}/${MAX_RETRIES})`, 'warning');
+      automationInterval = setTimeout(automationLoop, retryDelay);
+    } else {
+      console.error('Max retries exceeded, stopping automation');
+      stopAutomation();
+      showNotification('Automation stopped after multiple errors', 'error');
+      retryCount = 0;
+    }
   }
 }
 
@@ -174,11 +192,53 @@ async function processSearchPage() {
   }
 }
 
-function initializeSearchPage() {
+async function initializeSearchPage() {
   console.log('Initializing search results page');
+
+  // Wait for page to be ready with dynamic content
+  await waitForSearchResults();
 
   // Add automation controls to the page
   addAutomationControls();
+}
+
+/**
+ * Wait for search results to be fully loaded
+ * @param {number} timeout - Maximum time to wait in ms
+ * @returns {Promise<boolean>} True if results found
+ */
+async function waitForSearchResults(timeout = 10000) {
+  const selectors = [
+    '.search-results-container',
+    '.entity-result',
+    '.reusable-search__result-container'
+  ];
+
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+
+    const checkForResults = () => {
+      // Check if any search result selector exists
+      for (const selector of selectors) {
+        if (document.querySelector(selector)) {
+          resolve(true);
+          return;
+        }
+      }
+
+      // Check timeout
+      if (Date.now() - startTime >= timeout) {
+        console.log('Search results timeout - proceeding anyway');
+        resolve(false);
+        return;
+      }
+
+      // Retry after short delay
+      setTimeout(checkForResults, 200);
+    };
+
+    checkForResults();
+  });
 }
 
 function addAutomationControls() {
@@ -280,23 +340,73 @@ function getNotificationColor(type) {
   }
 }
 
-// Handle page navigation
+// Handle page navigation with proper cleanup
 let lastUrl = window.location.href;
-new MutationObserver(() => {
-  const currentUrl = window.location.href;
-  if (currentUrl !== lastUrl) {
-    lastUrl = currentUrl;
-    console.log('Page navigated to:', currentUrl);
 
-    // Stop automation if we navigate away from search results
-    if (!currentUrl.includes('/search/people/') && isAutomationActive) {
-      stopAutomation();
-      showNotification('Automation stopped - left search page', 'info');
-    }
-
-    // Initialize search page if we navigate to search results
-    if (currentUrl.includes('/search/people/')) {
-      setTimeout(initializeSearchPage, 1000); // Wait for page to load
-    }
+function setupNavigationObserver() {
+  // Disconnect existing observer if any
+  if (navigationObserver) {
+    navigationObserver.disconnect();
+    navigationObserver = null;
   }
-}).observe(document, { subtree: true, childList: true });
+
+  navigationObserver = new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      console.log('Page navigated to:', currentUrl);
+
+      // Stop automation if we navigate away from search results
+      if (!currentUrl.includes('/search/people/') && isAutomationActive) {
+        stopAutomation();
+        showNotification('Automation stopped - left search page', 'info');
+      }
+
+      // Initialize search page if we navigate to search results
+      if (currentUrl.includes('/search/people/')) {
+        // Use the async waitForSearchResults instead of fixed timeout
+        initializeSearchPage();
+      }
+    }
+  });
+
+  navigationObserver.observe(document, { subtree: true, childList: true });
+}
+
+// Initialize navigation observer
+setupNavigationObserver();
+
+// Cleanup function for when content script is unloaded
+function cleanup() {
+  if (navigationObserver) {
+    navigationObserver.disconnect();
+    navigationObserver = null;
+  }
+  if (automationInterval) {
+    clearTimeout(automationInterval);
+    automationInterval = null;
+  }
+  isAutomationActive = false;
+}
+
+// Listen for unload events to clean up
+window.addEventListener('unload', cleanup);
+window.addEventListener('beforeunload', cleanup);
+
+// Export functions for testing
+export {
+  initialize,
+  handleMessage,
+  startAutomation,
+  stopAutomation,
+  automationLoop,
+  processSearchPage,
+  initializeSearchPage,
+  waitForSearchResults,
+  addAutomationControls,
+  updateControlsDisplay,
+  showNotification,
+  getNotificationColor,
+  setupNavigationObserver,
+  cleanup
+};
