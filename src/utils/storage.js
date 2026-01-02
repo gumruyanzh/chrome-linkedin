@@ -26,6 +26,149 @@ export const STORAGE_KEYS = {
 };
 
 /**
+ * Schema definitions for storage data validation
+ */
+const STORAGE_SCHEMAS = {
+  [STORAGE_KEYS.SETTINGS]: {
+    type: 'object',
+    properties: {
+      connectionRequestsPerDay: { type: 'number', min: 1, max: 100 },
+      delayBetweenRequests: { type: 'number', min: 1000, max: 60000 },
+      personalizedMessages: { type: 'boolean' },
+      analyticsEnabled: { type: 'boolean' },
+      safeModeEnabled: { type: 'boolean' },
+      autoAcceptConnections: { type: 'boolean' },
+      weekendsEnabled: { type: 'boolean' }
+    }
+  },
+  [STORAGE_KEYS.ANALYTICS]: {
+    type: 'array',
+    items: {
+      type: 'object',
+      required: ['timestamp', 'type'],
+      properties: {
+        timestamp: { type: 'number' },
+        type: { type: 'string' },
+        id: { type: 'string' }
+      }
+    }
+  },
+  [STORAGE_KEYS.TEMPLATES]: {
+    type: 'array',
+    items: {
+      type: 'object',
+      required: ['id', 'name', 'content'],
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        content: { type: 'string' }
+      }
+    }
+  }
+};
+
+/**
+ * Validate a value against a schema property
+ * @param {*} value - Value to validate
+ * @param {Object} schema - Schema definition
+ * @returns {boolean} True if valid
+ */
+function validateValue(value, schema) {
+  if (value === null || value === undefined) {
+    return !schema.required;
+  }
+
+  switch (schema.type) {
+    case 'string':
+      return typeof value === 'string';
+    case 'number':
+      if (typeof value !== 'number' || isNaN(value)) return false;
+      if (schema.min !== undefined && value < schema.min) return false;
+      if (schema.max !== undefined && value > schema.max) return false;
+      return true;
+    case 'boolean':
+      return typeof value === 'boolean';
+    case 'array':
+      if (!Array.isArray(value)) return false;
+      if (schema.items) {
+        return value.every(item => validateValue(item, schema.items));
+      }
+      return true;
+    case 'object':
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+      if (schema.required) {
+        if (!schema.required.every(key => key in value)) return false;
+      }
+      if (schema.properties) {
+        for (const [key, propSchema] of Object.entries(schema.properties)) {
+          if (key in value && !validateValue(value[key], propSchema)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    default:
+      return true;
+  }
+}
+
+/**
+ * Validate storage data against schema
+ * @param {string} key - Storage key
+ * @param {*} data - Data to validate
+ * @returns {Object} Validation result
+ */
+export function validateStorageData(key, data) {
+  const schema = STORAGE_SCHEMAS[key];
+
+  if (!schema) {
+    // No schema defined, accept any data
+    return { valid: true, errors: [] };
+  }
+
+  const isValid = validateValue(data, schema);
+  return {
+    valid: isValid,
+    errors: isValid ? [] : [`Data for key "${key}" does not match expected schema`]
+  };
+}
+
+/**
+ * Sanitize data to remove potentially dangerous content
+ * @param {*} data - Data to sanitize
+ * @returns {*} Sanitized data
+ */
+export function sanitizeStorageData(data) {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (typeof data === 'string') {
+    // Remove potential script injections
+    return data
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeStorageData(item));
+  }
+
+  if (typeof data === 'object') {
+    const sanitized = {};
+    for (const [key, value] of Object.entries(data)) {
+      // Sanitize key names too
+      const sanitizedKey = key.replace(/[<>]/g, '');
+      sanitized[sanitizedKey] = sanitizeStorageData(value);
+    }
+    return sanitized;
+  }
+
+  return data;
+}
+
+/**
  * Get data from Chrome storage
  * @param {string|string[]|null} keys - Storage keys to retrieve
  * @param {string} area - Storage area ('local' or 'sync')
@@ -43,15 +186,37 @@ export async function getStorageData(keys = null, area = 'local') {
 }
 
 /**
- * Set data in Chrome storage
+ * Set data in Chrome storage with validation and sanitization
  * @param {Object} data - Data to store
  * @param {string} area - Storage area ('local' or 'sync')
+ * @param {Object} options - Options for storage
+ * @param {boolean} options.validate - Whether to validate data (default: true)
+ * @param {boolean} options.sanitize - Whether to sanitize data (default: true)
  * @returns {Promise<void>}
  */
-export async function setStorageData(data, area = 'local') {
+export async function setStorageData(data, area = 'local', options = {}) {
+  const { validate = true, sanitize = true } = options;
+
   try {
+    let processedData = data;
+
+    // Validate each key in the data
+    if (validate) {
+      for (const [key, value] of Object.entries(data)) {
+        const validation = validateStorageData(key, value);
+        if (!validation.valid) {
+          console.warn(`Storage validation warning for key "${key}":`, validation.errors);
+        }
+      }
+    }
+
+    // Sanitize the data
+    if (sanitize) {
+      processedData = sanitizeStorageData(data);
+    }
+
     const storage = area === 'sync' ? chrome.storage.sync : chrome.storage.local;
-    await storage.set(data);
+    await storage.set(processedData);
   } catch (error) {
     console.error('Error setting storage data:', error);
     throw error;

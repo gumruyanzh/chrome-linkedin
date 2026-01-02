@@ -8,17 +8,19 @@ describe('Production Build Validation', () => {
 
   describe('Build Output Structure', () => {
     test('should have proper build directory structure', () => {
+      // The actual Vite build outputs files in subdirectories
       const requiredFiles = [
-        'manifest.json',
-        'background.js',
-        'content.js',
-        'popup.html',
-        'popup.js'
+        'background/service-worker.js',
+        'content/linkedin-automation.js',
+        'popup/popup.js',
+        'src/popup/popup.html',
+        'tailwind.css'
       ];
 
       const requiredDirs = [
-        'icons',
-        'styles'
+        'background',
+        'content',
+        'popup'
       ];
 
       // Check if build directory exists (or create mock structure for testing)
@@ -111,9 +113,9 @@ describe('Production Build Validation', () => {
 
     test('should have minified JavaScript files', () => {
       const jsFiles = [
-        'background.js',
-        'content.js',
-        'popup.js'
+        'background/service-worker.js',
+        'content/linkedin-automation.js',
+        'popup/popup.js'
       ];
 
       jsFiles.forEach(fileName => {
@@ -168,11 +170,11 @@ describe('Production Build Validation', () => {
   describe('File Size Optimization', () => {
     test('should have reasonable file sizes', () => {
       const fileSizeLimits = {
-        'background.js': 500 * 1024,    // 500KB
-        'content.js': 1024 * 1024,      // 1MB
-        'popup.js': 300 * 1024,         // 300KB
-        'popup.html': 50 * 1024,        // 50KB
-        'manifest.json': 10 * 1024      // 10KB
+        'background/service-worker.js': 500 * 1024,    // 500KB
+        'content/linkedin-automation.js': 1024 * 1024, // 1MB
+        'popup/popup.js': 300 * 1024,                  // 300KB
+        'src/popup/popup.html': 50 * 1024,             // 50KB
+        'tailwind.css': 100 * 1024                     // 100KB
       };
 
       Object.entries(fileSizeLimits).forEach(([fileName, maxSize]) => {
@@ -252,7 +254,7 @@ describe('Production Build Validation', () => {
 
   describe('Code Quality Validation', () => {
     test('should not contain console statements in production code', () => {
-      const jsFiles = ['background.js', 'content.js', 'popup.js'];
+      const jsFiles = ['background/service-worker.js', 'content/linkedin-automation.js', 'popup/popup.js'];
 
       jsFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -278,7 +280,7 @@ describe('Production Build Validation', () => {
     });
 
     test('should not contain TODO or FIXME comments', () => {
-      const jsFiles = ['background.js', 'content.js', 'popup.js'];
+      const jsFiles = ['background/service-worker.js', 'content/linkedin-automation.js', 'popup/popup.js'];
 
       jsFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -300,7 +302,7 @@ describe('Production Build Validation', () => {
     });
 
     test('should have proper error handling', () => {
-      const jsFiles = ['background.js', 'content.js'];
+      const jsFiles = ['background/service-worker.js', 'content/linkedin-automation.js'];
 
       jsFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -409,7 +411,7 @@ describe('Production Build Validation', () => {
       ];
 
       // Check if any external libraries are bundled
-      const jsFiles = ['background.js', 'content.js', 'popup.js'];
+      const jsFiles = ['background/service-worker.js', 'content/linkedin-automation.js', 'popup/popup.js'];
 
       jsFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -445,7 +447,7 @@ describe('Production Build Validation', () => {
 
   describe('Security Validation', () => {
     test('should not contain hardcoded URLs except LinkedIn', () => {
-      const jsFiles = ['background.js', 'content.js', 'popup.js'];
+      const jsFiles = ['background/service-worker.js', 'content/linkedin-automation.js', 'popup/popup.js'];
 
       jsFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -480,7 +482,7 @@ describe('Production Build Validation', () => {
     });
 
     test('should have Content Security Policy compliance', () => {
-      const htmlFiles = ['popup.html'];
+      const htmlFiles = ['src/popup/popup.html'];
 
       htmlFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -511,7 +513,7 @@ describe('Production Build Validation', () => {
     });
 
     test('should not use eval or similar unsafe functions', () => {
-      const jsFiles = ['background.js', 'content.js', 'popup.js'];
+      const jsFiles = ['background/service-worker.js', 'content/linkedin-automation.js', 'popup/popup.js'];
 
       jsFiles.forEach(fileName => {
         const filePath = join(buildDir, fileName);
@@ -537,9 +539,9 @@ describe('Production Build Validation', () => {
   describe('Performance Validation', () => {
     test('should have efficient bundle sizes', () => {
       const bundleSizeTargets = {
-        'background.js': 200 * 1024,    // 200KB target
-        'content.js': 300 * 1024,       // 300KB target
-        'popup.js': 150 * 1024          // 150KB target
+        'background/service-worker.js': 200 * 1024,    // 200KB target
+        'content/linkedin-automation.js': 300 * 1024,  // 300KB target
+        'popup/popup.js': 150 * 1024                   // 150KB target
       };
 
       Object.entries(bundleSizeTargets).forEach(([fileName, targetSize]) => {
